@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+    <h1>Form</h1>
+
+    <form action="{{ url_for('submit') }}" method="POST">
+        {% for chapitre, sous_chapitres in data.items() %}
+            <h2>{{ chapitre }}</h2>
+            {% for sous_chapitre, paragraphes in sous_chapitres.items() %}
+                <h3>{{ sous_chapitre }}</h3>
+                {% for paragraphe, sous_paragraphes in paragraphes.items() %}
+                    <h4>{{ paragraphe }}</h4>
+                    {% for sous_paragraphe, questions in sous_paragraphes.items() %}
+                        <h5>{{ sous_paragraphe }}</h5>
+                        {% for question in questions %}
+                            <label>{{ question['question'] }}</label>
+                            <select name="{{ question['question'] }}">
+                                {% for option in question['response_type'].split('/') %}
+                                    <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        {% endfor %}
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        {% endfor %}
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if submitted %}
+        <h2>Form Submitted!</h2>
+        <ul>
+        {% for key, value in responses.items() %}
+            <li>{{ key }}: {{ value }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+</body>
+</html>
