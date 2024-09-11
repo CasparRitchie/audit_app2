@@ -1,0 +1,15 @@
+id,question,type,default_value
+1,Date de l'audit,Date,
+2,Nom du restaurant,Text,
+3,Gestionnaire,Text,
+4,Personne rencontrée - Prénom,Text,
+5,Personne rencontrée - Nom,Text,
+6,Personne rencontrée - Fonction,Text,
+7,Nombre de repas jour servis en moyenne,Integer,
+8,Nombre de places assises,Integer,
+9,Taux de rotation global,Calculated,"repas/jour moyenne divided by places assises *0.8"
+10,Nombre de repas servis ce jour,Integer,
+11,Taux de rotation du jour,Calculated,"repas servis ce jour divided by places assises *0.8"
+12,Hoiraires du self début,Time,11:30
+13,Hoiraires du self fin,Time,14:00
+14,Date(s) de(s) l'audit(s) précédent(s),DateLookup,
