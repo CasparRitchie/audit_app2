@@ -8,4 +8,4 @@ const root = createRoot(container);
 root.render(<App />);
 
 // Register the service worker to enable offline support
-serviceWorker.register();
+serviceWorkerRegistration.register();
