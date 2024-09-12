@@ -409,6 +409,7 @@ import pandas as pd
 import os
 from werkzeug.utils import secure_filename
 import math
+import numpy as np
 
 app = Flask(__name__)
 # CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -443,8 +444,7 @@ def load_header_data():
     return header_data
 
 
-# Function to load audit detail data
-import numpy as np
+
 
 # Function to load audit detail data
 def load_detail_data():
@@ -481,6 +481,12 @@ def load_detail_data():
         })
 
     return hierarchical_data
+
+
+@app.route('/')
+def home():
+    return 'Hello, this is your app running!'
+
 
 # API route to fetch audit header data
 @app.route('/api/audit_header', methods=['GET'])
