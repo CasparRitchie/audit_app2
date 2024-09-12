@@ -33,36 +33,48 @@ function AuditHeader() {
       .catch(error => console.error('Error fetching header data:', error));
   }, []);
 
+  // Function to calculate rates only when all required fields are filled
+  const calculateRates = (repasJour, placesAssises, repasJourServis) => {
+    let globalRate = null;
+    let jourRate = null;
+
+    // Calculate Taux de rotation global
+    if (repasJour && placesAssises) {
+      globalRate = ((repasJour / (placesAssises * 0.8)).toFixed(2));
+      setCalculatedFields((prevFields) => ({
+        ...prevFields,
+        9: globalRate,  // Assuming 9 is the ID for Taux de rotation global
+      }));
+    }
+
+    // Calculate Taux de rotation du jour
+    if (repasJourServis && placesAssises) {
+      jourRate = ((repasJourServis / (placesAssises * 0.8)).toFixed(2));
+      setCalculatedFields((prevFields) => ({
+        ...prevFields,
+        11: jourRate,  // Assuming 11 is the ID for Taux de rotation du jour
+      }));
+    }
+  };
+
   // Handle input changes and store in localStorage
   const handleInputChange = (event, questionId) => {
     const { value } = event.target;
-    setHeaderResponses({
+    const updatedResponses = {
       ...headerResponses,
-      [questionId]: value
-    });
-
-    // Save to localStorage
+      [questionId]: value,
+    };
+    setHeaderResponses(updatedResponses);
     saveToLocalStorage(questionId, value);
 
-    // Handle Calculations for specific fields
-    if (questionId === 7 || questionId === 8) { // Assumes these are for Taux de rotation global
-      const repasJour = parseInt(headerResponses[7] || 0, 10);
-      const placesAssises = parseInt(headerResponses[8] || 0, 10);
-      const globalRate = (repasJour / placesAssises) * 0.8;
-      setCalculatedFields({
-        ...calculatedFields,
-        9: globalRate.toFixed(2) // Assuming 9 is the question ID for Taux de rotation global
-      });
-    }
+    // Parse relevant values and ensure calculations happen only when both fields are filled
+    const repasJour = parseFloat(updatedResponses[7] || 0);  // Nombre de repas jour (Field 7)
+    const placesAssises = parseFloat(updatedResponses[8] || 0);  // Nombre de places assises (Field 8)
+    const repasJourServis = parseFloat(updatedResponses[10] || 0);  // Nombre de repas servis ce jour (Field 10)
 
-    if (questionId === 10 || questionId === 8) { // Assumes these are for Taux de rotation du jour
-      const repasJourServis = parseInt(headerResponses[10] || 0, 10);
-      const placesAssises = parseInt(headerResponses[8] || 0, 10);
-      const jourRate = (repasJourServis / placesAssises) * 0.8;
-      setCalculatedFields({
-        ...calculatedFields,
-        11: jourRate.toFixed(2) // Assuming 11 is the question ID for Taux de rotation du jour
-      });
+    // Call calculation only when necessary fields are present
+    if (repasJour && placesAssises) {
+      calculateRates(repasJour, placesAssises, repasJourServis);
     }
   };
 
