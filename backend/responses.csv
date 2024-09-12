@@ -1,12 +1,3 @@
-1,C,Unnamed: 2,Unnamed: 3,auditId,question,response,comment,image_path
-2,C,,,,,,,
-1-duplicate-0,PC,,,,,,,
-1-duplicate-1,C,,,,,,,
-1,C,,,,,,,
-2,C,,,,,,,
-4,C,,,,,,,
-1-duplicate-0,PC,,,,,,,
-1-duplicate-1,C,,,,,,,
-,,,,,1.0,C,,
-,,,,audit_1726152873182,1,C,,
-,,,,audit_1726152873182,1-duplicate-0,PC,,
+auditId,question,response,comment,image_path
+audit_1726152873182,1,C,,
+audit_1726152873182,1-duplicate-0,PC,,
