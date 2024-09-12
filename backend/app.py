@@ -77,7 +77,6 @@ def load_detail_data():
 # def home():
 #     return 'Hello, this is your app running!'
 # Serve React App
-# Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
