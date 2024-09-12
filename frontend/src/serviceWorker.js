@@ -1,17 +1,22 @@
 /* eslint-disable no-restricted-globals */
 
 const CACHE_NAME = "version-1";
-const urlsToCache = ['index.html', 'offline.html'];
+const urlsToCache = ['index.html', 'offline.html', '/static/js/main.7c957e3d.js', '/static/css/styles.scss'];
 
 // Install a service worker
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-    )
+  event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => {
+          return cache.addAll([
+              'index.html',
+              'offline.html',
+              '/',
+              // Dynamically cache all static files
+              '/static/js/',
+              '/static/css/'
+          ]);
+      })
+  );
 });
 
 // Listen for requests
