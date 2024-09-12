@@ -2,12 +2,12 @@
 
 const CACHE_NAME = "version-1";
 const urlsToCache = [
+  'index.html',
+  'offline.html',
   '/',
-  '/index.html',
-  '/offline.html',        // Offline fallback page
-  '/static/js/main.js',   // Main JS bundle
-  '/static/css/main.css', // Main CSS bundle
-  // Include any other critical assets such as logos
+  // Dynamically cache all static files
+  '/static/js/',
+  '/static/css/'
 ];
 
 self.addEventListener('install', (event) => {
