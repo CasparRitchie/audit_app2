@@ -15,6 +15,8 @@ DATA_CSV_PATH = os.path.join(os.path.dirname(__file__), 'questions.csv')
 HEADER_CSV_PATH = os.path.join(os.path.dirname(__file__), 'audit_header.csv')  # CSV for audit header
 RESPONSES_CSV_PATH = os.path.join(os.path.dirname(__file__), 'responses.csv')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+RESPONSES_AUDIT_HEADER_CSV_PATH = os.path.join(os.path.dirname(__file__), 'responses_audit_header.csv')
+
 
 # Ensure the uploads directory exists
 if not os.path.exists(UPLOAD_FOLDER):
@@ -105,16 +107,16 @@ def submit_responses():
     data = request.form  # Form data
     files = request.files  # Uploaded files
 
-    # Handle audit header responses
+    new_data = []
     audit_header_responses = []
+
+    # Process audit header responses
     for key, value in data.items():
         if key.startswith("header"):
             q_key = key.split("[")[1][:-1]
             audit_header_responses.append({"question": q_key, "response": value})
 
-    # Prepare the data for the responses.csv
-    new_data = []
-
+    # Process form responses
     for question, response in data.items():
         if question.startswith("responses"):
             q_key = question.split("[")[1][:-1]
@@ -129,7 +131,7 @@ def submit_responses():
                 image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
                 image.save(image_path)
 
-            # Append the question, response, comment, and image file path
+            # Append form response data
             new_data.append({
                 "question": q_key,
                 "response": response_value,
@@ -137,14 +139,23 @@ def submit_responses():
                 "image_path": image_filename or ''
             })
 
-    # Convert the new data into a DataFrame
+    # Convert both audit header and form response data into DataFrames
     df_new = pd.DataFrame(new_data)
+    df_audit_header = pd.DataFrame(audit_header_responses)
 
-    # Append the new data to the responses.csv file
+    # Append form responses to responses.csv
     if not os.path.exists(RESPONSES_CSV_PATH):
         df_new.to_csv(RESPONSES_CSV_PATH, index=False)
     else:
         df_new.to_csv(RESPONSES_CSV_PATH, mode='a', header=False, index=False)
+
+    # Optionally, save audit header data separately or append to the same file
+    # (This example assumes you want to append to a separate file, but adjust as needed)
+    if audit_header_responses:
+        if not os.path.exists(RESPONSES_AUDIT_HEADER_CSV_PATH):
+            df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, index=False)
+        else:
+            df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, mode='a', header=False, index=False)
 
     return jsonify({"status": "success", "message": "Responses saved to responses.csv"})
 
