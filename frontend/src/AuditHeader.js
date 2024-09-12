@@ -79,28 +79,44 @@ function AuditHeader() {
   };
 
   // Handle form submission to send data to the backend
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const formData = new FormData();
+  // Helper function to generate a unique audit ID
+const generateAuditId = () => {
+  return 'audit_' + Date.now(); // Simple unique ID based on timestamp
+};
 
-    // Append header responses to formData
-    Object.entries(headerResponses).forEach(([questionId, response]) => {
-      formData.append(`header[${questionId}]`, response);
-    });
+// Handle form submission to send data to the backend
+const handleSubmit = (event) => {
+  event.preventDefault();
+  const formData = new FormData();
 
-    // Submit the form data to the backend
-    axios.post('/api/submit', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+  // Check if audit ID exists in localStorage, otherwise generate one
+  let auditId = localStorage.getItem("auditId");
+  if (!auditId) {
+    auditId = generateAuditId();
+    localStorage.setItem("auditId", auditId); // Save auditId to localStorage
+  }
+
+  // Append audit ID to formData
+  formData.append('auditId', auditId);
+
+  // Append header responses to formData
+  Object.entries(headerResponses).forEach(([questionId, response]) => {
+    formData.append(`header[${questionId}]`, response);
+  });
+
+  // Submit the form data to the backend
+  axios.post('/api/submit', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+    .then(response => {
+      alert('Audit header responses submitted successfully!');
     })
-      .then(response => {
-        alert('Audit header responses submitted successfully!');
-      })
-      .catch(error => {
-        console.error('Error submitting audit header responses:', error);
-      });
-  };
+    .catch(error => {
+      console.error('Error submitting audit header responses:', error);
+    });
+};
 
   if (!headerData || headerData.length === 0) {
     return <div>Loading audit header data...</div>;

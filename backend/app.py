@@ -107,6 +107,7 @@ def submit_responses():
     data = request.form  # Form data
     files = request.files  # Uploaded files
 
+    audit_id = data.get('auditId')  # Retrieve the audit ID, or generate a new one
     new_data = []
     audit_header_responses = []
 
@@ -114,7 +115,11 @@ def submit_responses():
     for key, value in data.items():
         if key.startswith("header"):
             q_key = key.split("[")[1][:-1]
-            audit_header_responses.append({"question": q_key, "response": value})
+            audit_header_responses.append({
+                "auditId": audit_id,  # Include auditId here
+                "question": q_key,
+                "response": value
+            })
 
     # Process form responses
     for question, response in data.items():
@@ -131,8 +136,9 @@ def submit_responses():
                 image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
                 image.save(image_path)
 
-            # Append form response data
+            # Append form response data along with auditId
             new_data.append({
+                "auditId": audit_id,  # Include auditId here
                 "question": q_key,
                 "response": response_value,
                 "comment": comment,
@@ -143,14 +149,24 @@ def submit_responses():
     df_new = pd.DataFrame(new_data)
     df_audit_header = pd.DataFrame(audit_header_responses)
 
-    # Append form responses to responses.csv
-    if not os.path.exists(RESPONSES_CSV_PATH):
-        df_new.to_csv(RESPONSES_CSV_PATH, index=False)
+    # Load existing responses into a DataFrame if the file exists
+    if os.path.exists(RESPONSES_CSV_PATH):
+        df_existing = pd.read_csv(RESPONSES_CSV_PATH)
     else:
-        df_new.to_csv(RESPONSES_CSV_PATH, mode='a', header=False, index=False)
+        df_existing = pd.DataFrame()
+
+    # Check if the audit ID already exists in the CSV file
+    if not df_existing.empty and audit_id in df_existing.get('auditId', []):
+        # Update the existing row for this audit
+        df_existing.update(df_new)
+    else:
+        # Append a new row for this audit
+        df_existing = pd.concat([df_existing, df_new], ignore_index=True)
+
+    # Save the updated DataFrame back to the CSV file
+    df_existing.to_csv(RESPONSES_CSV_PATH, index=False)
 
     # Optionally, save audit header data separately or append to the same file
-    # (This example assumes you want to append to a separate file, but adjust as needed)
     if audit_header_responses:
         if not os.path.exists(RESPONSES_AUDIT_HEADER_CSV_PATH):
             df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, index=False)
@@ -158,7 +174,6 @@ def submit_responses():
             df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, mode='a', header=False, index=False)
 
     return jsonify({"status": "success", "message": "Responses saved to responses.csv"})
-
 
 if __name__ == '__main__':
     app.run(debug=True)

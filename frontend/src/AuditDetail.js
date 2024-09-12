@@ -7,85 +7,96 @@ function AuditDetail() {
   const [comments, setComments] = useState({});  // State for optional comments
   const [images, setImages] = useState({});  // State for optional images
   const [duplicates, setDuplicates] = useState({});  // State to track duplicated questions
+  const [auditId, setAuditId] = useState(null);  // State for auditId
 
   // Fetch audit detail data from the backend and load stored form responses from localStorage
-useEffect(() => {
-  axios.get('/api/audit_detail')
-    .then(response => {
-      console.log('Fetched data:', response.data);
-      setData(response.data);  // Set the fetched data
+  useEffect(() => {
+    axios.get('/api/audit_detail')
+      .then(response => {
+        console.log('Fetched data:', response.data);
+        setData(response.data);  // Set the fetched data
 
-      // Load stored form responses from localStorage
-      const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
-      if (storedResponses) {
-        const initialFormResponses = {};
-        const initialComments = {};
-        const initialImages = {};
+        // Load stored form responses from localStorage
+        const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
+        const storedAuditId = localStorage.getItem("auditId");
 
-        Object.entries(storedResponses).forEach(([key, value]) => {
-          if (key.startsWith("comment_")) {
-            const questionId = key.replace("comment_", "");
-            initialComments[questionId] = value.comment;
-          } else if (key.startsWith("image_")) {
-            const questionId = key.replace("image_", "");
-            initialImages[questionId] = value.imageName;
-          } else {
-            initialFormResponses[key] = value.response;
-          }
-        });
+        if (storedResponses) {
+          const initialFormResponses = {};
+          const initialComments = {};
+          const initialImages = {};
 
-        setFormResponses(initialFormResponses);
-        setComments(initialComments);
-        setImages(initialImages);
-      }
-    })
-    .catch(error => {
-      console.error('There was an error fetching the data!', error);
-    });
-}, []);
+          Object.entries(storedResponses).forEach(([key, value]) => {
+            if (key.startsWith("comment_")) {
+              const questionId = key.replace("comment_", "");
+              initialComments[questionId] = value.comment;
+            } else if (key.startsWith("image_")) {
+              const questionId = key.replace("image_", "");
+              initialImages[questionId] = value.imageName;
+            } else {
+              initialFormResponses[key] = value.response;
+            }
+          });
+
+          setFormResponses(initialFormResponses);
+          setComments(initialComments);
+          setImages(initialImages);
+        }
+
+        if (storedAuditId) {
+          setAuditId(storedAuditId);  // Restore the auditId from localStorage
+        } else {
+          const newAuditId = Date.now().toString();  // Generate a new unique auditId
+          setAuditId(newAuditId);
+          localStorage.setItem("auditId", newAuditId);  // Save the auditId in localStorage
+        }
+      })
+      .catch(error => {
+        console.error('There was an error fetching the data!', error);
+      });
+  }, []);
 
   // Store form responses to localStorage whenever a change happens
-const saveToLocalStorage = (key, value) => {
-  const existingData = JSON.parse(localStorage.getItem("auditResponses")) || {};
-  existingData[key] = value;
-  localStorage.setItem("auditResponses", JSON.stringify(existingData));
-};
+  const saveToLocalStorage = (key, value) => {
+    const existingData = JSON.parse(localStorage.getItem("auditResponses")) || {};
+    existingData[key] = value;
+    localStorage.setItem("auditResponses", JSON.stringify(existingData));
+  };
 
-// Handle form input change for audit details
-const handleInputChange = (event, questionId) => {
-  const value = event.target.value;
-  setFormResponses({
-    ...formResponses,
-    [questionId]: value,
-  });
+  // Handle form input change for audit details
+  const handleInputChange = (event, questionId) => {
+    const value = event.target.value;
+    setFormResponses({
+      ...formResponses,
+      [questionId]: value,
+    });
 
-  // Save to localStorage
-  saveToLocalStorage(questionId, { response: value });
-};
+    // Save to localStorage
+    saveToLocalStorage(questionId, { response: value });
+  };
 
-// Handle comment input change
-const handleCommentChange = (event, questionId) => {
-  const value = event.target.value;
-  setComments({
-    ...comments,
-    [questionId]: value,
-  });
+  // Handle comment input change
+  const handleCommentChange = (event, questionId) => {
+    const value = event.target.value;
+    setComments({
+      ...comments,
+      [questionId]: value,
+    });
 
-  // Save to localStorage
-  saveToLocalStorage(`comment_${questionId}`, { comment: value });
-};
+    // Save to localStorage
+    saveToLocalStorage(`comment_${questionId}`, { comment: value });
+  };
 
-// Handle image file change
-const handleImageChange = (event, questionId) => {
-  const file = event.target.files[0];
-  setImages({
-    ...images,
-    [questionId]: file,
-  });
+  // Handle image file change
+  const handleImageChange = (event, questionId) => {
+    const file = event.target.files[0];
+    setImages({
+      ...images,
+      [questionId]: file,
+    });
 
-  // Save to localStorage (only the file name for reference)
-  saveToLocalStorage(`image_${questionId}`, { imageName: file.name });
-};
+    // Save to localStorage (only the file name for reference)
+    saveToLocalStorage(`image_${questionId}`, { imageName: file.name });
+  };
 
   // Handle duplication of a question
   const handleDuplicate = (questionObj) => {
@@ -96,9 +107,12 @@ const handleImageChange = (event, questionId) => {
     });
   };
 
+  // Submit form data
   const handleSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData();
+
+    formData.append('auditId', auditId);  // Add the auditId to the formData
 
     Object.entries(formResponses).forEach(([questionId, response]) => {
       formData.append(`responses[${questionId}]`, response);
@@ -123,6 +137,7 @@ const handleImageChange = (event, questionId) => {
         alert('Form submitted successfully!');
         // Clear localStorage upon successful submission
         localStorage.removeItem("auditResponses");
+        localStorage.removeItem("auditId");
       })
       .catch(error => {
         console.error('There was an error submitting the form!', error);
@@ -229,7 +244,7 @@ const handleImageChange = (event, questionId) => {
                                     value={formResponses[`${duplicate.id}-duplicate-${index}`] || ''}
                                     onChange={(event) => handleInputChange(event, `${duplicate.id}-duplicate-${index}`)}
                                   >
-                                    <option value="">Select</option>
+                                                                        <option value="">Select</option>
                                     {duplicate.response_type.split('/').map((option) => (
                                       <option key={option} value={option}>{option}</option>
                                     ))}
