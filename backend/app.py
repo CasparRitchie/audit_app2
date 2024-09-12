@@ -76,7 +76,7 @@ def load_detail_data():
 @app.route('/')
 def home():
     return 'Hello, this is your app running!'
-Serve React App
+# Serve React App
 # @app.route('/')
 # def serve_react_app():
 #     return send_from_directory(app.static_folder, 'index.html')
