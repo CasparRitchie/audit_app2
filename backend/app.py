@@ -77,13 +77,14 @@ def load_detail_data():
 # def home():
 #     return 'Hello, this is your app running!'
 # Serve React App
-@app.route('/')
-def serve_react_app():
-    return send_from_directory(app.static_folder, 'index.html')
-
+# Serve React App
+@app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory(app.static_folder, path)
+def serve_react_app(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 # API route to fetch audit header data
 @app.route('/api/audit_header', methods=['GET'])
