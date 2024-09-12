@@ -3,8 +3,10 @@ from flask_cors import CORS
 import pandas as pd
 import os
 from werkzeug.utils import secure_filename
-import math
-import numpy as np
+import logging
+
+# Set up logging to print errors to the console
+logging.basicConfig(level=logging.DEBUG)
 
 # app = Flask(__name__)
 app = Flask(__name__, static_folder="../frontend/build", static_url_path="")
@@ -75,9 +77,6 @@ def load_detail_data():
     return hierarchical_data
 
 
-# @app.route('/')
-# def home():
-#     return 'Hello, this is your app running!'
 # Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -104,76 +103,100 @@ def get_audit_detail():
 # API route to submit form responses and save to responses.csv
 @app.route('/api/submit', methods=['POST'])
 def submit_responses():
-    data = request.form  # Form data
-    files = request.files  # Uploaded files
+    try:
+        data = request.form  # Form data
+        files = request.files  # Uploaded files
 
-    audit_id = data.get('auditId')  # Retrieve the audit ID, or generate a new one
-    new_data = []
-    audit_header_responses = []
+        audit_id = data.get('auditId')  # Retrieve the audit ID
+        new_data = []
+        audit_header_responses = []
 
-    # Process audit header responses
-    for key, value in data.items():
-        if key.startswith("header"):
-            q_key = key.split("[")[1][:-1]
-            audit_header_responses.append({
-                "auditId": audit_id,  # Include auditId here
-                "question": q_key,
-                "response": value
-            })
+        # Process audit header responses
+        for key, value in data.items():
+            if key.startswith("header"):
+                q_key = key.split("[")[1][:-1]
+                audit_header_responses.append({
+                    "auditId": audit_id,
+                    "question": q_key,
+                    "response": value
+                })
 
-    # Process form responses
-    for question, response in data.items():
-        if question.startswith("responses"):
-            q_key = question.split("[")[1][:-1]
-            response_value = response
-            comment = data.get(f'comments[{q_key}]', '')
-            image = files.get(f'images[{q_key}]')
+        # Process form responses
+        for question, response in data.items():
+            if question.startswith("responses"):
+                q_key = question.split("[")[1][:-1]
+                response_value = response
+                comment = data.get(f'comments[{q_key}]', '')
+                image = files.get(f'images[{q_key}]')
 
-            # Handle image file saving
-            image_filename = None
-            if image:
-                image_filename = secure_filename(image.filename)
-                image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-                image.save(image_path)
+                # Handle image file saving
+                image_filename = None
+                if image:
+                    image_filename = secure_filename(image.filename)
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+                    image.save(image_path)
 
-            # Append form response data along with auditId
-            new_data.append({
-                "auditId": audit_id,  # Include auditId here
-                "question": q_key,
-                "response": response_value,
-                "comment": comment,
-                "image_path": image_filename or ''
-            })
+                new_data.append({
+                    "auditId": audit_id,
+                    "question": q_key,
+                    "response": response_value,
+                    "comment": comment,
+                    "image_path": image_filename or ''
+                })
 
-    # Convert both audit header and form response data into DataFrames
-    df_new = pd.DataFrame(new_data)
-    df_audit_header = pd.DataFrame(audit_header_responses)
+        # Convert both audit header and form response data into DataFrames
+        df_new = pd.DataFrame(new_data)
+        df_audit_header = pd.DataFrame(audit_header_responses)
 
-    # Load existing responses into a DataFrame if the file exists
-    if os.path.exists(RESPONSES_CSV_PATH):
-        df_existing = pd.read_csv(RESPONSES_CSV_PATH)
-    else:
-        df_existing = pd.DataFrame()
-
-    # Check if the audit ID already exists in the CSV file
-    if not df_existing.empty and audit_id in df_existing.get('auditId', []):
-        # Update the existing row for this audit
-        df_existing.update(df_new)
-    else:
-        # Append a new row for this audit
-        df_existing = pd.concat([df_existing, df_new], ignore_index=True)
-
-    # Save the updated DataFrame back to the CSV file
-    df_existing.to_csv(RESPONSES_CSV_PATH, index=False)
-
-    # Optionally, save audit header data separately or append to the same file
-    if audit_header_responses:
-        if not os.path.exists(RESPONSES_AUDIT_HEADER_CSV_PATH):
-            df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, index=False)
+        # Load existing responses into a DataFrame if the file exists
+        if os.path.exists(RESPONSES_CSV_PATH):
+            df_existing = pd.read_csv(RESPONSES_CSV_PATH)
         else:
-            df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, mode='a', header=False, index=False)
+            df_existing = pd.DataFrame()
 
-    return jsonify({"status": "success", "message": "Responses saved to responses.csv"})
+        # Check if the audit ID already exists in the CSV file
+        if not df_existing.empty and audit_id in df_existing.get('auditId', []):
+            # Update the existing row for this audit
+            df_existing.update(df_new)
+        else:
+            # Append a new row for this audit
+            df_existing = pd.concat([df_existing, df_new], ignore_index=True)
+
+        # Save the updated DataFrame back to the CSV file
+        df_existing.to_csv(RESPONSES_CSV_PATH, index=False)
+
+        # Optionally, save audit header data separately or append to the same file
+        if audit_header_responses:
+            if not os.path.exists(RESPONSES_AUDIT_HEADER_CSV_PATH):
+                df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, index=False)
+            else:
+                df_audit_header.to_csv(RESPONSES_AUDIT_HEADER_CSV_PATH, mode='a', header=False, index=False)
+
+        return jsonify({"status": "success", "message": "Responses saved to responses.csv"})
+
+    except Exception as e:
+        logging.error(f"Error in submit_responses: {e}")
+        return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
+
+@app.route('/api/get_audits', methods=['GET'])
+def get_audits():
+    if os.path.exists(RESPONSES_CSV_PATH):
+        df = pd.read_csv(RESPONSES_CSV_PATH)
+        audits = df[['auditId', 'date', 'restaurant']].drop_duplicates().to_dict(orient='records')
+        return jsonify(audits)
+    else:
+        return jsonify([]), 404
+
+
+@app.route('/api/get_audit/<audit_id>', methods=['GET'])
+def get_audit(audit_id):
+    if os.path.exists(RESPONSES_CSV_PATH):
+        df = pd.read_csv(RESPONSES_CSV_PATH)
+        audit_data = df[df['auditId'] == audit_id].to_dict(orient='records')
+        return jsonify(audit_data)
+    else:
+        return jsonify({"error": "Audit not found"}), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True)
