@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from werkzeug.utils import secure_filename
 import logging
+import json
 
 # Set up logging to print errors to the console
 logging.basicConfig(level=logging.DEBUG)
@@ -178,11 +179,69 @@ def submit_responses():
         logging.error(f"Error in submit_responses: {e}")
         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
 
+
+# @app.route('/api/get_audits', methods=['GET'])
+# def get_audits():
+#     if os.path.exists(RESPONSES_CSV_PATH):
+#         df = pd.read_csv(RESPONSES_CSV_PATH)
+
+#         # Function to safely parse JSON from the response field
+#         def parse_response(row):
+#             try:
+#                 return json.loads(row) if isinstance(row, str) else row
+#             except (ValueError, TypeError):
+#                 return row  # Return the row as-is if it can't be parsed
+
+#         # Parse the 'response' field
+#         df['response'] = df['response'].apply(parse_response)
+
+#         # Convert response dictionaries to strings to avoid unhashable type errors
+#         df['response_str'] = df['response'].apply(lambda x: json.dumps(x) if isinstance(x, dict) else str(x))
+
+#         # Extract relevant audit information
+#         audits = df[['auditId', 'question', 'response_str', 'comment', 'image_path']].drop_duplicates()
+
+#         # Convert 'response_str' back to the original 'response' dict (if needed for the API response)
+#         audits['response'] = audits['response_str'].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+
+#         # Drop the temporary string column and convert the result to a dictionary
+#         audits = audits.drop(columns=['response_str']).to_dict(orient='records')
+
+#         return audits
+#     else:
+#         return ([]), 404
+
+
 @app.route('/api/get_audits', methods=['GET'])
 def get_audits():
     if os.path.exists(RESPONSES_CSV_PATH):
         df = pd.read_csv(RESPONSES_CSV_PATH)
-        audits = df[['auditId', 'date', 'restaurant']].drop_duplicates().to_dict(orient='records')
+
+        # Function to safely parse JSON from the response field
+        def parse_response(row):
+            try:
+                return json.loads(row) if isinstance(row, str) else row
+            except (ValueError, TypeError):
+                return row  # Return the row as-is if it can't be parsed
+
+        # Parse the 'response' field
+        df['response'] = df['response'].apply(parse_response)
+
+        # Convert response dictionaries to strings to avoid unhashable type errors
+        df['response_str'] = df['response'].apply(lambda x: json.dumps(x) if isinstance(x, dict) else str(x))
+
+        # Handle NaN values in the DataFrame (replace NaN with None)
+        df = df.fillna(value='')  # Replace NaN with empty strings, or use None for nulls
+
+        # Extract relevant audit information
+        audits = df[['auditId', 'question', 'response_str', 'comment', 'image_path']].drop_duplicates()
+
+        # Convert 'response_str' back to the original 'response' dict (if needed for the API response)
+        audits['response'] = audits['response_str'].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+
+        # Drop the temporary string column and convert the result to a dictionary
+        audits = audits.drop(columns=['response_str']).to_dict(orient='records')
+
         return jsonify(audits)
     else:
         return jsonify([]), 404

@@ -599,35 +599,71 @@ function AuditDetail({ updateProgress }) {
     updateProgress(calculateProgress(data, formResponses));
   };
 
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData();
     formData.append('auditId', auditId);
 
+    // Append responses
     Object.entries(formResponses).forEach(([questionId, response]) => {
-      formData.append(`responses[${questionId}]`, response);
+        // Check if the response is an object and serialize it
+        const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
+        formData.append(`responses[${questionId}]`, finalResponse);
     });
 
+    // Append comments
     Object.entries(comments).forEach(([questionId, comment]) => {
-      formData.append(`comments[${questionId}]`, comment);
+        formData.append(`comments[${questionId}]`, comment);
     });
 
+    // Append images
     Object.entries(images).forEach(([questionId, image]) => {
-      if (image) {
-        formData.append(`images[${questionId}]`, image);
-      }
+        if (image) {
+            formData.append(`images[${questionId}]`, image);
+        }
     });
 
     axios.post('/api/submit', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data' },
     })
-      .then(() => {
+    .then(() => {
         alert('Audit detail submitted successfully!');
         localStorage.removeItem("auditResponses");
         localStorage.removeItem("auditId");
-      })
-      .catch(error => console.error('Error submitting audit detail:', error));
-  };
+    })
+    .catch(error => console.error('Error submitting audit detail:', error));
+};
+
+  // const handleSubmit = (event) => {
+  //   event.preventDefault();
+  //   const formData = new FormData();
+  //   formData.append('auditId', auditId);
+
+  //   Object.entries(formResponses).forEach(([questionId, response]) => {
+  //     formData.append(`responses[${questionId}]`, response);
+  //   });
+
+  //   Object.entries(comments).forEach(([questionId, comment]) => {
+  //     formData.append(`comments[${questionId}]`, comment);
+  //   });
+
+  //   Object.entries(images).forEach(([questionId, image]) => {
+  //     if (image) {
+  //       formData.append(`images[${questionId}]`, image);
+  //     }
+  //   });
+
+  //   axios.post('/api/submit', formData, {
+  //     headers: { 'Content-Type': 'multipart/form-data' },
+  //   })
+  //     .then(() => {
+  //       alert('Audit detail submitted successfully!');
+  //       localStorage.removeItem("auditResponses");
+  //       localStorage.removeItem("auditId");
+  //     })
+  //     .catch(error => console.error('Error submitting audit detail:', error));
+  // };
 
   const toggleSousChapitre = (sousChapitre) => {
     setExpandedSousChapitres(prevState => ({
