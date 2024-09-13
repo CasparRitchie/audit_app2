@@ -2,3 +2,6 @@ auditId,question,response,comment,image_path
 1726173453008,35,100,OK100,
 1726173453008,35-duplicate-1726173461468,60,Not ok,
 1726213686844,1,NC,test,Screenshot_2024-09-10_at_14.03.23.png
+1726214776261,1,C,Testing expand collapse,
+1726214776261,10,C,first,
+1726214776261,10-duplicate-1726214841252,C,second,
