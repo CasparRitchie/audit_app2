@@ -36,3 +36,16 @@
     transform: rotate(360deg);
   }
 }
+
+.answered-question {
+  background-color: #f0f0f0; /* Light grey background */
+  opacity: 0.7; /* Slightly lower opacity */
+  border: 1px solid #ccc; /* Lighter border */
+}
+
+/* Add this CSS to force landscape orientation */
+@media screen and (orientation: portrait) {
+  body {
+    display: none;
+  }
+}

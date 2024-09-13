@@ -4,16 +4,16 @@ import { Link } from 'react-router-dom';
 function Home() {
   return (
     <div>
-      <h1>Audit Management</h1>
+      <h1>ID Restauration</h1>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Link to="/create">
-          <button>Create New Audit</button>
+          <button>Creer Audit</button>
         </Link>
         <Link to="/view">
-          <button>View Audits</button>
+          <button>Voir Audits (en construction)</button>
         </Link>
         <Link to="/edit">
-          <button>Edit Audit</button>
+          <button>Editer Audit (en construction)</button>
         </Link>
       </div>
     </div>

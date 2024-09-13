@@ -13,5 +13,9 @@ h4 {
 h5 {
   color: #e74c3c;
 }
-
+.answered-question {
+  background-color: #f0f0f0; /* Light grey background */
+  opacity: 0.7; /* Slightly lower opacity */
+  border: 1px solid #ccc; /* Lighter border */
+}
 /*# sourceMappingURL=styles.css.map */
