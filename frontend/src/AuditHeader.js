@@ -273,26 +273,36 @@ function AuditHeader() {
     <div>
       <h2>Audit Header</h2>
       <form onSubmit={handleSubmit} className="mb-4">
-        {headerData.map(question => (
-          <div key={question.id} className="form-group">
-            <label>{question.question}</label>
-            {question.type === 'Text' && (
-              <input type="text" className="form-control" value={headerResponses[question.id] || ''} onChange={e => handleInputChange(e, question.id)} />
-            )}
-            {question.type === 'Integer' && (
-              <input type="number" className="form-control" value={headerResponses[question.id] || ''} onChange={e => handleInputChange(e, question.id)} />
-            )}
-            {question.type === 'Date' && (
-              <input type="date" className="form-control" value={headerResponses[question.id] || ''} onChange={e => handleInputChange(e, question.id)} />
-            )}
-            {question.type === 'Time' && (
-              <input type="time" className="form-control" value={headerResponses[question.id] || question.default_value || ''} onChange={e => handleInputChange(e, question.id)} />
-            )}
-            {question.type === 'Calculated' && (
-              <input type="text" className="form-control" value={calculatedFields[question.id] || ''} readOnly />
-            )}
-          </div>
-        ))}
+      {headerData.map(question => (
+  <div key={question.id} className="form-group">
+    <label>{question.question}</label>
+    {question.type === 'Text' && (
+      <input type="text" className="form-control"
+        value={headerResponses[question.id] || ''}
+        onChange={e => handleInputChange(e, question.id)} />
+    )}
+    {question.type === 'Integer' && (
+      <input type="number" className="form-control"
+        value={headerResponses[question.id] || ''}
+        onChange={e => handleInputChange(e, question.id)} />
+    )}
+    {question.type === 'Date' && (
+      <input type="date" className="form-control"
+        value={headerResponses[question.id] || ''}
+        onChange={e => handleInputChange(e, question.id)} />
+    )}
+    {question.type === 'Time' && (
+      <input type="time" className="form-control"
+        value={headerResponses[question.id] || question.default_value || ''}
+        onChange={e => handleInputChange(e, question.id)} />
+    )}
+    {question.type === 'Calculated' && (
+      <input type="text" className="form-control"
+        value={calculatedFields[question.id] || ''}
+        readOnly />
+    )}
+  </div>
+))}
         <button type="submit" className="btn btn-primary">Submit</button>
       </form>
     </div>

@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "heroku-postbuild": "cd frontend && npm install && npm run build"
+  },
+  "dependencies": {
+    "dropbox": "^10.34.0"
   }
 }
