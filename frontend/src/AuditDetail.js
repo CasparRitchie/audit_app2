@@ -554,28 +554,59 @@ function AuditDetail({ updateProgress }) {
       .catch(error => console.error('Error fetching data:', error));
   }, [calculateProgress, updateProgress]);
 
-  const handleInputChange = (event, questionId, sousChapitre) => {
+  // const handleInputChange = (event, questionId, sousChapitre) => {
+  //   const { value } = event.target;
+  //   const updatedResponses = {
+  //     ...formResponses,
+  //     [questionId]: { response: value }, // Store only the response here
+  //   };
+  //   setFormResponses(updatedResponses);
+  //   localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+  //   updateProgress(calculateProgress(data, updatedResponses));
+  // };
+  const handleInputChange = (event, questionId) => {
     const { value } = event.target;
     const updatedResponses = {
       ...formResponses,
-      [questionId]: { response: value }, // Store only the response here
+      [questionId]: { ...formResponses[questionId], response: value }, // Store response and comment together
     };
     setFormResponses(updatedResponses);
     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
     updateProgress(calculateProgress(data, updatedResponses));
-  };
+};
 
+// const handleCommentChange = (event, questionId) => {
+//     const { value } = event.target;
+//     const updatedResponses = {
+//       ...formResponses,
+//       [questionId]: { ...formResponses[questionId], comment: value }, // Store comment under the same questionId
+//     };
+//     setFormResponses(updatedResponses);
+//     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+// };
+
+  // const handleCommentChange = (event, questionId) => {
+  //   const { value } = event.target;
+  //   setComments(prev => ({
+  //     ...prev,
+  //     [questionId]: value,
+  //   }));
+  //   localStorage.setItem("auditResponses", JSON.stringify({
+  //     ...formResponses,
+  //     [`comment_${questionId}`]: { comment: value }
+  //   }));
+  // };
   const handleCommentChange = (event, questionId) => {
     const { value } = event.target;
     setComments(prev => ({
       ...prev,
-      [questionId]: value,
+      [questionId]: value, // Just use questionId directly
     }));
     localStorage.setItem("auditResponses", JSON.stringify({
       ...formResponses,
-      [`comment_${questionId}`]: { comment: value }
+      [questionId]: { ...formResponses[questionId], comment: value }, // Use questionId directly
     }));
-  };
+};
 
   const handleImageChange = (event, questionId) => {
     const file = event.target.files[0];
@@ -600,70 +631,70 @@ function AuditDetail({ updateProgress }) {
   };
 
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const formData = new FormData();
-    formData.append('auditId', auditId);
+//   const handleSubmit = (event) => {
+//     event.preventDefault();
+//     const formData = new FormData();
+//     formData.append('auditId', auditId);
 
-    // Append responses
-    Object.entries(formResponses).forEach(([questionId, response]) => {
-        // Check if the response is an object and serialize it
-        const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
-        formData.append(`responses[${questionId}]`, finalResponse);
-    });
+//     // Append responses
+//     Object.entries(formResponses).forEach(([questionId, response]) => {
+//         // Check if the response is an object and serialize it
+//         const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
+//         formData.append(`responses[${questionId}]`, finalResponse);
+//     });
 
-    // Append comments
-    Object.entries(comments).forEach(([questionId, comment]) => {
-        formData.append(`comments[${questionId}]`, comment);
-    });
+//     // Append comments
+//     Object.entries(comments).forEach(([questionId, comment]) => {
+//         formData.append(`comments[${questionId}]`, comment);
+//     });
 
-    // Append images
-    Object.entries(images).forEach(([questionId, image]) => {
-        if (image) {
-            formData.append(`images[${questionId}]`, image);
-        }
-    });
+//     // Append images
+//     Object.entries(images).forEach(([questionId, image]) => {
+//         if (image) {
+//             formData.append(`images[${questionId}]`, image);
+//         }
+//     });
 
-    axios.post('/api/submit', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    .then(() => {
-        alert('Audit detail submitted successfully!');
-        localStorage.removeItem("auditResponses");
-        localStorage.removeItem("auditId");
-    })
-    .catch(error => console.error('Error submitting audit detail:', error));
+//     axios.post('/api/submit', formData, {
+//         headers: { 'Content-Type': 'multipart/form-data' },
+//     })
+//     .then(() => {
+//         alert('Audit detail submitted successfully!');
+//         localStorage.removeItem("auditResponses");
+//         localStorage.removeItem("auditId");
+//     })
+//     .catch(error => console.error('Error submitting audit detail:', error));
+// };
+const handleSubmit = (event) => {
+  event.preventDefault();
+  const formData = new FormData();
+  formData.append('auditId', auditId);
+
+  // Append responses (which may include comments now)
+  Object.entries(formResponses).forEach(([questionId, response]) => {
+      // Check if the response is an object and serialize it
+      const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
+      formData.append(`responses[${questionId}]`, finalResponse);
+  });
+
+  // Append images
+  Object.entries(images).forEach(([questionId, image]) => {
+      if (image) {
+          formData.append(`images[${questionId}]`, image);
+      }
+  });
+
+  axios.post('/api/submit', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  .then(() => {
+      alert('Audit detail submitted successfully!');
+      localStorage.removeItem("auditResponses");
+      localStorage.removeItem("auditId");
+  })
+  .catch(error => console.error('Error submitting audit detail:', error));
 };
 
-  // const handleSubmit = (event) => {
-  //   event.preventDefault();
-  //   const formData = new FormData();
-  //   formData.append('auditId', auditId);
-
-  //   Object.entries(formResponses).forEach(([questionId, response]) => {
-  //     formData.append(`responses[${questionId}]`, response);
-  //   });
-
-  //   Object.entries(comments).forEach(([questionId, comment]) => {
-  //     formData.append(`comments[${questionId}]`, comment);
-  //   });
-
-  //   Object.entries(images).forEach(([questionId, image]) => {
-  //     if (image) {
-  //       formData.append(`images[${questionId}]`, image);
-  //     }
-  //   });
-
-  //   axios.post('/api/submit', formData, {
-  //     headers: { 'Content-Type': 'multipart/form-data' },
-  //   })
-  //     .then(() => {
-  //       alert('Audit detail submitted successfully!');
-  //       localStorage.removeItem("auditResponses");
-  //       localStorage.removeItem("auditId");
-  //     })
-  //     .catch(error => console.error('Error submitting audit detail:', error));
-  // };
 
   const toggleSousChapitre = (sousChapitre) => {
     setExpandedSousChapitres(prevState => ({
