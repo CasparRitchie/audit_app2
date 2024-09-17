@@ -20,11 +20,6 @@ function App() {
     setSidebarOpen(!isSidebarOpen); // Toggle sidebar visibility
   };
 
-  window.addEventListener("orientationchange", function() {
-    if (window.orientation === 0 || window.orientation === 180) {
-      alert("Please rotate your device to landscape for the best experience.");
-    }
-  });
 
   return (
     <Router>

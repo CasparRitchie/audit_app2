@@ -19,6 +19,7 @@ h5 {
   font-size: calc(1.725rem + .9vw) !important
 
 }
+
 .answered-question {
   background-color: #f0f0f0; /* Light grey background */
   opacity: 0.7; /* Slightly lower opacity */
@@ -29,6 +30,14 @@ h5 {
   color: #353939 !important;
   font-size: calc(1.325rem + .9vw) !important
 
+}
+
+h5.sidebar-h5{
+  font-size: calc(0.725rem + .9vw) !important
+}
+
+h3.sidebar-h3{
+  font-size: calc(1.225rem + .9vw) !important
 }
 
 .btn.btn-link {

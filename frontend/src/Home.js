@@ -10,7 +10,7 @@ function Home() {
           <button>Creer Audit</button>
         </Link>
         <Link to="/view">
-          <button>Voir Audits (en construction)</button>
+          <button>Voir Audits</button>
         </Link>
         <Link to="/edit">
           <button>Editer Audit (en construction)</button>
