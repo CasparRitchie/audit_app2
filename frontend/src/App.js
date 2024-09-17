@@ -43,10 +43,10 @@ function App() {
               <div className="collapse navbar-collapse">
                 <ul className="navbar-nav mr-auto">
                   <li className="nav-item">
-                    <Link className="nav-link" to="/create">Create Audit</Link>
+                    <Link className="nav-link" to="/create">Nouvel Audit</Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link" to="/view">View Audits</Link>
+                    <Link className="nav-link" to="/view">Voir Audits</Link>
                   </li>
                   <li className="nav-item">
                     <Link className="nav-link" to="/edit">Edit Audit</Link>

@@ -274,34 +274,57 @@ function AuditHeader() {
       <h2>Informations générales</h2>
       <form onSubmit={handleSubmit} className="mb-4">
       {headerData.map(question => (
-  <div key={question.id} className="form-group">
-    <label>{question.question}</label>
-    {question.type === 'Text' && (
-      <input type="text" className="form-control"
-        value={headerResponses[question.id] || ''}
-        onChange={e => handleInputChange(e, question.id)} />
-    )}
-    {question.type === 'Integer' && (
-      <input type="number" className="form-control"
-        value={headerResponses[question.id] || ''}
-        onChange={e => handleInputChange(e, question.id)} />
-    )}
-    {question.type === 'Date' && (
-      <input type="date" className="form-control"
-        value={headerResponses[question.id] || ''}
-        onChange={e => handleInputChange(e, question.id)} />
-    )}
-    {question.type === 'Time' && (
-      <input type="time" className="form-control"
-        value={headerResponses[question.id] || question.default_value || ''}
-        onChange={e => handleInputChange(e, question.id)} />
-    )}
-    {question.type === 'Calculated' && (
-      <input type="text" className="form-control"
-        value={calculatedFields[question.id] || ''}
-        readOnly />
-    )}
-  </div>
+  <div key={question.id} className="form-group d-flex align-items-center border-bottom mb-3 pb-2">
+  {/* Question Label */}
+  <label style={{ flexBasis: '30%', marginBottom: 0 }}>{question.question}</label>
+
+  {/* Response Area */}
+  {question.type === 'Text' && (
+    <input
+      type="text"
+      className="form-control"
+      style={{ backgroundColor: '#f8f9fa', flexBasis: '70%' }} // Grey background for response
+      value={headerResponses[question.id] || ''}
+      onChange={e => handleInputChange(e, question.id)}
+    />
+  )}
+  {question.type === 'Integer' && (
+    <input
+      type="number"
+      className="form-control"
+      style={{ backgroundColor: '#f8f9fa', flexBasis: '70%' }} // Grey background for response
+      value={headerResponses[question.id] || ''}
+      onChange={e => handleInputChange(e, question.id)}
+    />
+  )}
+  {question.type === 'Date' && (
+    <input
+      type="date"
+      className="form-control"
+      style={{ backgroundColor: '#f8f9fa', flexBasis: '70%' }} // Grey background for response
+      value={headerResponses[question.id] || ''}
+      onChange={e => handleInputChange(e, question.id)}
+    />
+  )}
+  {question.type === 'Time' && (
+    <input
+      type="time"
+      className="form-control"
+      style={{ backgroundColor: '#f8f9fa', flexBasis: '70%' }} // Grey background for response
+      value={headerResponses[question.id] || question.default_value || ''}
+      onChange={e => handleInputChange(e, question.id)}
+    />
+  )}
+  {question.type === 'Calculated' && (
+    <input
+      type="text"
+      className="form-control"
+      style={{ backgroundColor: '#f8f9fa', flexBasis: '70%' }} // Grey background for response
+      value={calculatedFields[question.id] || ''}
+      readOnly
+    />
+  )}
+</div>
 ))}
         <button type="submit" className="btn btn-primary">Submit</button>
       </form>
