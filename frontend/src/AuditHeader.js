@@ -271,7 +271,7 @@ function AuditHeader() {
 
   return (
     <div>
-      <h2>Audit Header</h2>
+      <h2>Informations générales</h2>
       <form onSubmit={handleSubmit} className="mb-4">
       {headerData.map(question => (
   <div key={question.id} className="form-group">

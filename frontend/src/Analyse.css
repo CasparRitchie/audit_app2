@@ -1,0 +1,22 @@
+.response-btn {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: black;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}

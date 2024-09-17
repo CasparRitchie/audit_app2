@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, send_file
 from flask_cors import CORS
 import pandas as pd
 import os
@@ -11,14 +11,19 @@ from dotenv import load_dotenv
 import requests
 import time
 from dotenv import set_key
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Use Agg backend for non-GUI environments
+
+
 
 # Load environment variables from .env file if present
 load_dotenv()
 
-print("Access Token:", os.getenv('DROPBOX_ACCESS_TOKEN'))
-print("App Key:", os.getenv('DROPBOX_APP_KEY'))
-print("Refresh Token:", os.getenv('DROPBOX_REFRESH_TOKEN'))
-print("App Secret:", os.getenv('DROPBOX_APP_SECRET'))
+# print("Access Token:", os.getenv('DROPBOX_ACCESS_TOKEN'))
+# print("App Key:", os.getenv('DROPBOX_APP_KEY'))
+# print("Refresh Token:", os.getenv('DROPBOX_REFRESH_TOKEN'))
+# print("App Secret:", os.getenv('DROPBOX_APP_SECRET'))
 
 # Get Dropbox Access Token from environment variable
 DROPBOX_ACCESS_TOKEN = os.getenv('DROPBOX_ACCESS_TOKEN')
@@ -95,8 +100,6 @@ def refresh_access_token():
         return access_token
     else:
         raise Exception('Failed to refresh access token')
-
-
 
 
 def update_env_file(key, value):
@@ -459,6 +462,67 @@ def oauth_callback():
             return "Failed to get token: {}".format(response.text)
     else:
         return "No authorization code provided."
+
+
+@app.route('/api/chart/cpcnc/<int:c_count>/<int:pc_count>/<int:nc_count>', methods=['GET'])
+def get_cpcnc_chart(c_count, pc_count, nc_count):
+    # Pie chart, where the slices will be ordered and plotted counter-clockwise:
+    labels = 'C', 'PC', 'NC'
+    sizes = [c_count, pc_count, nc_count]
+    colors = ['#28a745', '#ffc107', '#dc3545']
+    explode = (0.1, 0, 0)  # only "explode" the C slice (slightly pull out)
+
+    plt.figure(figsize=(6, 6))
+    plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%',
+            shadow=True, startangle=140)
+    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    # Save chart to a BytesIO buffer
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plt.close()
+
+    return send_file(img, mimetype='image/png')
+
+
+@app.route('/api/chart/okko/<int:ok_count>/<int:ko_count>', methods=['GET'])
+def get_okko_chart(ok_count, ko_count):
+    # Pie chart for OK/KO
+    labels = 'OK', 'KO'
+    sizes = [ok_count, ko_count]
+    colors = ['#28a745', '#dc3545']
+
+    plt.figure(figsize=(6, 6))
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+    plt.axis('equal')
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plt.close()
+
+    return send_file(img, mimetype='image/png')
+
+
+@app.route('/api/chart/temperature/<int:over63>/<int:under63>', methods=['GET'])
+def get_temperature_chart(over63, under63):
+    # Pie chart for temperature
+    labels = '>= 63°C', '< 63°C'
+    sizes = [over63, under63]
+    colors = ['#28a745', '#dc3545']
+
+    plt.figure(figsize=(6, 6))
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+    plt.axis('equal')
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plt.close()
+
+    return send_file(img, mimetype='image/png')
+
 
 
 if __name__ == '__main__':

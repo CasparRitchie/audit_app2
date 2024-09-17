@@ -16,7 +16,7 @@ function Sidebar({ data }) {
               duration={500} // Optional: Set the scrolling duration
               className="text-decoration-none"
             >
-              <h5>{sousChapitre}</h5>
+              <h5 className="sidebar-entry-text">{sousChapitre}</h5>
             </Link>
             <div className="progress">
               <div

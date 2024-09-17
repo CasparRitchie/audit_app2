@@ -1,9 +1,13 @@
 h2 {
   color: #2c3e50;
+  font-size: calc(3.325rem + .9vw) !important
 }
 
 h3 {
-  color: #3498db;
+  color: #FFFFFF  !important;
+  background-color: #D30E7F;
+  font-size: calc(2.325rem + .9vw) !important
+
 }
 
 h4 {
@@ -11,11 +15,33 @@ h4 {
 }
 
 h5 {
-  color: #e74c3c;
+  color: #D30E7F !important;
+  font-size: calc(1.725rem + .9vw) !important
+
 }
 .answered-question {
   background-color: #f0f0f0; /* Light grey background */
   opacity: 0.7; /* Slightly lower opacity */
   border: 1px solid #ccc; /* Lighter border */
+}
+
+.sidebar-entry-text{
+  color: #353939 !important;
+  font-size: calc(1.325rem + .9vw) !important
+
+}
+
+.btn.btn-link {
+  color: #353939;
+}
+
+div.progress-bar {
+  background-color: #353939;
+
+}
+
+button.btn.btn-primary {
+  background-color: #353939;
+  border-color: #000000;
 }
 /*# sourceMappingURL=styles.css.map */

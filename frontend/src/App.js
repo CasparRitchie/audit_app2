@@ -6,6 +6,7 @@ import AuditDetail from './AuditDetail';
 import ViewAudits from './ViewAudits';
 import EditAudit from './EditAudit';
 import Sidebar from './Sidebar'; // Import Sidebar
+import Analyse from './Analyse';
 
 function App() {
   const [progressData, setProgressData] = useState({}); // Track progress data for sidebar
@@ -64,6 +65,7 @@ function App() {
               <Route path="/create" element={<><AuditHeader /><AuditDetail updateProgress={updateProgress} /></>} />
               <Route path="/view" element={<ViewAudits />} />
               <Route path="/edit" element={<EditAudit />} />
+              <Route path="/analyse" element={<Analyse />} />
             </Routes>
           </div>
         </div>
