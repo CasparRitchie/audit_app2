@@ -57,7 +57,7 @@ import { Link } from 'react-scroll'; // Import Link from react-scroll
 function Sidebar({ data }) {
   return (
     <div className="sidebar" style={styles.sidebar}>
-      <h3>Completion Progress</h3>
+      <h3>Complétion</h3>
       <ul className="list-group">
   {Object.entries(data).map(([sousChapitre, progressData]) => (
     <li key={sousChapitre} className="list-group-item">
