@@ -47,11 +47,9 @@
 
 //           const paragraphePercentageComplete = paragrapheTotalQuestions > 0 ? Math.round((paragrapheAnsweredQuestions / paragrapheTotalQuestions) * 100) : 0;
 
-//           // Accumulate for sousChapitre totals
 //           sousChapitreTotalQuestions += paragrapheTotalQuestions;
 //           sousChapitreAnsweredQuestions += paragrapheAnsweredQuestions;
 
-//           // Store progress for individual paragraphe
 //           paragrapheProgressData[paragraphe] = {
 //             percentage: paragraphePercentageComplete,
 //             totalQuestions: paragrapheTotalQuestions,
@@ -65,7 +63,7 @@
 //           percentage: sousChapitrePercentageComplete,
 //           totalQuestions: sousChapitreTotalQuestions,
 //           answeredQuestions: sousChapitreAnsweredQuestions,
-//           paragraphes: paragrapheProgressData,  // Add paragraphe progress data
+//           paragraphes: paragrapheProgressData,
 //         };
 //       });
 //     });
@@ -74,7 +72,6 @@
 //   }, [duplicates]);
 
 //   useEffect(() => {
-//     // Fetch data from the API once when the component mounts
 //     const fetchData = async () => {
 //       try {
 //         const response = await axios.get('/api/audit_detail');
@@ -94,38 +91,35 @@
 //           localStorage.setItem("auditId", newAuditId);
 //         }
 
-//         // Trigger initial progress update based on the loaded data
 //         updateProgress(calculateProgress(response.data, storedResponses));
 //       } catch (error) {
 //         console.error('Error fetching data:', error);
 //       }
 //     };
 
-//     fetchData(); // Call the fetchData function only once
-//   }, []); // The empty array ensures this runs only once when the component is mounted
-
+//     fetchData();
+//   }, [calculateProgress, updateProgress]);
 
 //   const handleInputChange = (event, questionId) => {
 //     const { value } = event.target;
 //     const updatedResponses = {
 //       ...formResponses,
-//       [questionId]: { ...formResponses[questionId], response: value }, // Store response and comment together
+//       [questionId]: { ...formResponses[questionId], response: value },
 //     };
 //     setFormResponses(updatedResponses);
 //     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
 //     updateProgress(calculateProgress(data, updatedResponses));
 //   };
 
-
 //   const handleCommentChange = (event, questionId) => {
 //     const { value } = event.target;
 //     setComments(prev => ({
 //       ...prev,
-//       [questionId]: value, // Just use questionId directly
+//       [questionId]: value,
 //     }));
 //     localStorage.setItem("auditResponses", JSON.stringify({
 //       ...formResponses,
-//       [questionId]: { ...formResponses[questionId], comment: value }, // Use questionId directly
+//       [questionId]: { ...formResponses[questionId], comment: value },
 //     }));
 //   };
 
@@ -151,21 +145,16 @@
 //     updateProgress(calculateProgress(data, formResponses));
 //   };
 
-
-
 //   const handleSubmit = (event) => {
 //     event.preventDefault();
 //     const formData = new FormData();
 //     formData.append('auditId', auditId);
 
-//     // Append responses (which may include comments now)
 //     Object.entries(formResponses).forEach(([questionId, response]) => {
-//       // Check if the response is an object and serialize it
 //       const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
 //       formData.append(`responses[${questionId}]`, finalResponse);
 //     });
 
-//     // Append images
 //     Object.entries(images).forEach(([questionId, image]) => {
 //       if (image) {
 //         formData.append(`images[${questionId}]`, image);
@@ -182,7 +171,6 @@
 //     })
 //     .catch(error => console.error('Error submitting audit detail:', error));
 //   };
-
 
 //   const toggleSousChapitre = (sousChapitre) => {
 //     setExpandedSousChapitres(prevState => ({
@@ -216,46 +204,56 @@
 //                 {expandedSousChapitres[sousChapitre] && (
 //                   <div>
 //                     {Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
-//                       <div key={paragraphe} id={paragraphe} className="mb-2"> {/* ID added here */}
+//                       <div key={paragraphe} id={paragraphe} className="mb-2">
 //                         <h5>{paragraphe}</h5>
 //                         {Object.entries(sousParagraphes).map(([sousParagraphe, questions]) => (
 //                           <div key={sousParagraphe} className="card mb-2">
 //                             <div className="card-body">
-//                             {questions.map((questionObj, index) => (
-//                               <div
-//                                 key={questionObj.id}
-//                                 style={{ backgroundColor: index % 2 === 0 ? '#e1e1e1' : '#ffffff' }} // Alternating background color
-//                               >
-//                                 <QuestionComponent
-//                                   questionObj={questionObj}
-//                                   formResponses={formResponses}
-//                                   handleInputChange={(event) => handleInputChange(event, questionObj.id, sousChapitre)}
-//                                   handleCommentChange={handleCommentChange}
-//                                   handleImageChange={handleImageChange}
-//                                   handleDuplicate={handleDuplicate}
-//                                   comments={comments}
-//                                   images={images}
-//                                 />
+//                               {questions.map((questionObj, index) => (
+//                                 <div key={questionObj.id} style={{ backgroundColor: index % 2 === 0 ? '#e1e1e1' : '#ffffff' }}>
+//                                   <QuestionComponent
+//                                     questionObj={questionObj}
+//                                     formResponses={formResponses}
+//                                     handleInputChange={(event) => handleInputChange(event, questionObj.id, sousChapitre)}
+//                                     handleCommentChange={handleCommentChange}
+//                                     handleImageChange={handleImageChange}
+//                                     handleDuplicate={handleDuplicate}
+//                                     comments={comments}
+//                                     images={images}
+//                                   />
+//                                   {(duplicates[questionObj.id] || []).map((duplicate, index) => (
+//                                     <DuplicateQuestionComponent
+//                                       key={duplicate.duplicateId}
+//                                       duplicate={duplicate}
+//                                       index={index}
+//                                       formResponses={formResponses}
+//                                       handleInputChange={handleInputChange}
+//                                       handleCommentChange={handleCommentChange}
+//                                       handleImageChange={handleImageChange}
+//                                       comments={comments}
+//                                       images={images}
+//                                       />
+//                                     ))}
+//                                   </div>
+//                                 ))}
 //                               </div>
-//                             ))}
 //                             </div>
-//                           </div>
-//                         ))}
-//                       </div>
-//                     ))}
-//                   </div>
-//                 )}
-//               </div>
-//             ))}
-//           </div>
-//         ))}
-//         <button type="submit" className="btn btn-primary">Envoyer</button>
-//       </form>
-//     </div>
-//   );
-// }
+//                           ))}
+//                         </div>
+//                       ))}
+//                     </div>
+//                   )}
+//                 </div>
+//               ))}
+//             </div>
+//           ))}
+//           <button type="submit" className="btn btn-primary">Envoyer</button>
+//         </form>
+//       </div>
+//     );
+//   }
 
-// export default AuditDetail;
+//   export default AuditDetail;
 
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -276,17 +274,25 @@ function AuditDetail({ updateProgress }) {
     let progressData = {};
 
     Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
+      if (!sousChapitres) return; // Add this check to prevent null/undefined sousChapitres
+
       Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
+        if (!paragraphes) return; // Add this check to prevent null/undefined paragraphes
+
         let sousChapitreTotalQuestions = 0;
         let sousChapitreAnsweredQuestions = 0;
 
         let paragrapheProgressData = {};
 
         Object.entries(paragraphes || {}).forEach(([paragraphe, sousParagraphes = {}]) => {
+          if (!sousParagraphes) return; // Add this check to prevent null/undefined sousParagraphes
+
           let paragrapheTotalQuestions = 0;
           let paragrapheAnsweredQuestions = 0;
 
           Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
+            if (!questions) return; // Add this check to prevent null/undefined questions
+
             paragrapheTotalQuestions += questions.length;
 
             questions.forEach((question) => {
@@ -305,7 +311,9 @@ function AuditDetail({ updateProgress }) {
             });
           });
 
-          const paragraphePercentageComplete = paragrapheTotalQuestions > 0 ? Math.round((paragrapheAnsweredQuestions / paragrapheTotalQuestions) * 100) : 0;
+          const paragraphePercentageComplete = paragrapheTotalQuestions > 0
+            ? Math.round((paragrapheAnsweredQuestions / paragrapheTotalQuestions) * 100)
+            : 0;
 
           sousChapitreTotalQuestions += paragrapheTotalQuestions;
           sousChapitreAnsweredQuestions += paragrapheAnsweredQuestions;
@@ -317,7 +325,9 @@ function AuditDetail({ updateProgress }) {
           };
         });
 
-        const sousChapitrePercentageComplete = sousChapitreTotalQuestions > 0 ? Math.round((sousChapitreAnsweredQuestions / sousChapitreTotalQuestions) * 100) : 0;
+        const sousChapitrePercentageComplete = sousChapitreTotalQuestions > 0
+          ? Math.round((sousChapitreAnsweredQuestions / sousChapitreTotalQuestions) * 100)
+          : 0;
 
         progressData[sousChapitre] = {
           percentage: sousChapitrePercentageComplete,
@@ -443,6 +453,9 @@ function AuditDetail({ updateProgress }) {
     return <div>Loading audit details...</div>;
   }
 
+  // Helper function to calculate the alternating background
+  const getBackgroundColor = (index) => index % 2 === 0 ? '#e1e1e1' : '#ffffff';
+
   return (
     <div>
       <h2>Grilles de l'audit</h2>
@@ -469,48 +482,59 @@ function AuditDetail({ updateProgress }) {
                         {Object.entries(sousParagraphes).map(([sousParagraphe, questions]) => (
                           <div key={sousParagraphe} className="card mb-2">
                             <div className="card-body">
-                              {questions.map((questionObj, index) => (
-                                <div key={questionObj.id} style={{ backgroundColor: index % 2 === 0 ? '#e1e1e1' : '#ffffff' }}>
-                                  <QuestionComponent
-                                    questionObj={questionObj}
-                                    formResponses={formResponses}
-                                    handleInputChange={(event) => handleInputChange(event, questionObj.id, sousChapitre)}
-                                    handleCommentChange={handleCommentChange}
-                                    handleImageChange={handleImageChange}
-                                    handleDuplicate={handleDuplicate}
-                                    comments={comments}
-                                    images={images}
-                                  />
-                                  {(duplicates[questionObj.id] || []).map((duplicate, index) => (
-                                    <DuplicateQuestionComponent
-                                      key={duplicate.duplicateId}
-                                      duplicate={duplicate}
-                                      index={index}
-                                      formResponses={formResponses}
-                                      handleInputChange={handleInputChange}
-                                      handleCommentChange={handleCommentChange}
-                                      handleImageChange={handleImageChange}
-                                      comments={comments}
-                                      images={images}
-                                      />
-                                    ))}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
-          <button type="submit" className="btn btn-primary">Envoyer</button>
-        </form>
-      </div>
-    );
-  }
+                              {questions.reduce((acc, questionObj, questionIndex) => {
+                                const allQuestionsAndDuplicates = [
+                                  questionObj,
+                                  ...(duplicates[questionObj.id] || [])
+                                ];
 
-  export default AuditDetail;
+                                allQuestionsAndDuplicates.forEach((item, itemIndex) => {
+                                  acc.push(
+                                    <div key={item.id || item.duplicateId} style={{ backgroundColor: getBackgroundColor(questionIndex + itemIndex) }}>
+                                      {item.duplicateId ? (
+                                        <DuplicateQuestionComponent
+                                          duplicate={item}
+                                          index={itemIndex}
+                                          formResponses={formResponses}
+                                          handleInputChange={handleInputChange}
+                                          handleCommentChange={handleCommentChange}
+                                          handleImageChange={                                          handleInputChange}
+                                          comments={comments}
+                                          images={images}
+                                        />
+                                      ) : (
+                                        <QuestionComponent
+                                          questionObj={item}
+                                          formResponses={formResponses}
+                                          handleInputChange={(event) => handleInputChange(event, item.id, sousChapitre)}
+                                          handleCommentChange={handleCommentChange}
+                                          handleImageChange={handleImageChange}
+                                          handleDuplicate={handleDuplicate}
+                                          comments={comments}
+                                          images={images}
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                });
+
+                                return acc;
+                              }, [])}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+        <button type="submit" className="btn btn-primary">Envoyer</button>
+      </form>
+    </div>
+  );
+}
+
+export default AuditDetail;
