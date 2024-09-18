@@ -10,25 +10,32 @@ function DuplicateQuestionComponent({
   comments,
   images,
 }) {
+  const isSelected = (option) => formResponses[duplicate.duplicateId]?.response === option;
+
+  const getButtonColor = (option) => {
+    if (option === 'C' || option === 'OK') return 'btn-success'; // Green for "C" or "OK"
+    if (option === 'PC') return 'custom-btn-warning'; // Custom class for "PC"
+    if (option === 'NC' || option === 'KO') return 'btn-danger'; // Red for "NC" or "KO"
+    return 'custom-btn-secondary'; // Default grey for unselected options
+  };
+
   return (
-    <div key={`${duplicate.duplicateId}`} className="card mt-3">
+    <div key={duplicate.duplicateId} className="card mt-3">
       <div className="card-body d-flex flex-nowrap align-items-center">
-        {/* Duplicate Question Label */}
         <div className="flex-item question" style={{ flexBasis: '20%', flexShrink: 0 }}>
           <label>{duplicate.question} (Duplicate {index + 1})</label>
         </div>
 
-        {/* Input for Duplicated Question */}
         <div className="flex-item response-field" style={{ flexBasis: '15%', flexShrink: 0 }}>
           {duplicate.response_type === 'Temperature' ? (
             <input
               type="number"
-              value={formResponses[`${duplicate.duplicateId}`] || ''}
-              onChange={(event) => handleInputChange(event, `${duplicate.duplicateId}`)}
+              value={formResponses[duplicate.duplicateId]?.response || ''}
+              onChange={(event) => handleInputChange(event, duplicate.duplicateId, true)}
               placeholder="Enter temperature"
               className="form-control"
             />
-          ) : duplicate.response_type === 'C/PC/NC' || duplicate.response_type === 'OK/KO' ? (
+          ) : (
             <div className="btn-group" role="group" aria-label={`${duplicate.response_type} options`}>
               {duplicate.response_type.split('/').map((option) => (
                 <React.Fragment key={option}>
@@ -39,13 +46,11 @@ function DuplicateQuestionComponent({
                     id={`${option}-${duplicate.duplicateId}`}
                     autoComplete="off"
                     value={option}
-                    checked={formResponses[duplicate.duplicateId] === option}
-                    onChange={(event) => handleInputChange(event, duplicate.duplicateId)}
+                    checked={isSelected(option)}
+                    onChange={(event) => handleInputChange(event, duplicate.duplicateId, true)}
                   />
                   <label
-                    className={`btn ${
-                      option === 'C' || option === 'OK' ? 'btn-success' : option === 'PC' ? 'btn-warning' : 'btn-danger'
-                    }`}
+                    className={`btn ${isSelected(option) ? getButtonColor(option) : 'custom-btn-secondary'}`}
                     htmlFor={`${option}-${duplicate.duplicateId}`}
                   >
                     {option}
@@ -53,39 +58,24 @@ function DuplicateQuestionComponent({
                 </React.Fragment>
               ))}
             </div>
-          ) : (
-            <select
-              value={formResponses[`${duplicate.duplicateId}`] || ''}
-              onChange={(event) => handleInputChange(event, `${duplicate.duplicateId}`)}
-              className="form-control"
-            >
-              <option value="">Select</option>
-              {duplicate.response_type.split('/').map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
           )}
         </div>
 
-        {/* Comment Input for Duplicated Question */}
         <div className="flex-item comment-field" style={{ flexBasis: '20%', flexShrink: 0 }}>
           <textarea
             className="form-control"
-            value={comments[`${duplicate.duplicateId}`] || ''}
-            onChange={(event) => handleCommentChange(event, `${duplicate.duplicateId}`)}
+            value={comments[duplicate.duplicateId] || ''}
+            onChange={(event) => handleCommentChange(event, duplicate.duplicateId)}
             placeholder="Add a comment"
           />
         </div>
 
-        {/* Image Upload for Duplicated Question */}
         <div className="flex-item image-upload" style={{ flexBasis: '15%', flexShrink: 0 }}>
           <input
             type="file"
             className="form-control-file"
             accept="image/*"
-            onChange={(event) => handleImageChange(event, `${duplicate.duplicateId}`)}
+            onChange={(event) => handleImageChange(event, duplicate.duplicateId)}
           />
         </div>
       </div>
