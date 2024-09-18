@@ -348,7 +348,7 @@ function AuditDetail({ updateProgress }) {
   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
   const [auditId, setAuditId] = useState(null);
 
-  const calculateProgress = useCallback((auditData = {}, responses = {}) => {
+  const calculateProgress = useCallback((auditData = {}, responses = {}, removedQuestions = {}) => {
     let progressData = {};
     Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
       Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
@@ -361,17 +361,26 @@ function AuditDetail({ updateProgress }) {
           let paragrapheAnsweredQuestions = 0;
 
           Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
-            paragrapheTotalQuestions += questions.length;
+            // Filter out the removed questions
+            const activeQuestions = questions.filter(
+              (question) => !(removedQuestions[sousChapitre] || []).includes(question.id)
+            );
 
-            questions.forEach((question) => {
+            paragrapheTotalQuestions += activeQuestions.length;
+
+            activeQuestions.forEach((question) => {
               if (responses[question.id]?.response) {
                 paragrapheAnsweredQuestions += 1;
               }
 
               const duplicateQuestions = duplicates[question.id] || [];
-              paragrapheTotalQuestions += duplicateQuestions.length;
+              const activeDuplicates = duplicateQuestions.filter(
+                (duplicate) => !(removedQuestions[sousChapitre] || []).includes(duplicate.duplicateId)
+              );
 
-              duplicateQuestions.forEach((duplicate) => {
+              paragrapheTotalQuestions += activeDuplicates.length;
+
+              activeDuplicates.forEach((duplicate) => {
                 if (responses[duplicate.duplicateId]?.response) {
                   paragrapheAnsweredQuestions += 1;
                 }
@@ -407,7 +416,7 @@ function AuditDetail({ updateProgress }) {
     });
 
     return progressData;
-  }, [duplicates]);
+  }, [duplicates, removedQuestions]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -671,4 +680,3 @@ function AuditDetail({ updateProgress }) {
 }
 
 export default AuditDetail;
-
