@@ -44,28 +44,38 @@ function QuestionComponent({
       />
     ) : questionObj.response_type === 'C/PC/NC' || questionObj.response_type === 'OK/KO' ? (
       <div className="btn-group" role="group" aria-label={`${questionObj.response_type} options`}>
-        {questionObj.response_type.split('/').map((option) => (
-          <React.Fragment key={option}>
-            <input
-              type="radio"
-              className="btn-check"
-              name={`options-${questionObj.id}`}
-              id={`${option}-${questionObj.id}`}
-              autoComplete="off"
-              value={option}
-              checked={responseValue === option}
-              onChange={(event) => handleInputChange(event, questionObj.id)}
-            />
-            <label
-              className={`btn ${
-                option === 'C' || option === 'OK' ? 'btn-success' : option === 'PC' ? 'btn-warning' : 'btn-danger'
-              }`}
-              htmlFor={`${option}-${questionObj.id}`}
-            >
-              {option}
-            </label>
-          </React.Fragment>
-        ))}
+        {questionObj.response_type.split('/').map((option) => {
+          const isSelected = formResponses[questionObj.id]?.response === option;
+
+          // Define color classes for selected options
+          const getButtonColor = (option) => {
+            if (option === 'C' || option === 'OK') return 'btn-success'; // Green for "C" or "OK"
+            if (option === 'PC') return 'btn-warning'; // Amber for "PC"
+            if (option === 'NC' || option === 'KO') return 'btn-danger'; // Red for "NC" or "KO"
+            return 'btn-secondary'; // Default grey for unselected options
+          };
+
+          return (
+            <React.Fragment key={option}>
+              <input
+                type="radio"
+                className="btn-check"
+                name={`options-${questionObj.id}`}
+                id={`${option}-${questionObj.id}`}
+                autoComplete="off"
+                value={option}
+                checked={isSelected} // Check if this option is selected
+                onChange={(event) => handleInputChange(event, questionObj.id)}
+              />
+              <label
+                className={`btn ${isSelected ? getButtonColor(option) : 'btn-secondary'}`} // Set button color
+                htmlFor={`${option}-${questionObj.id}`}
+              >
+                {option}
+              </label>
+            </React.Fragment>
+          );
+        })}
       </div>
     ) : (
       <select

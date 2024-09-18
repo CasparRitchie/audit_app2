@@ -110,7 +110,6 @@ def update_env_file(key, value):
     set_key(env_file_path, key, value)
 
 
-
 # Function to load a CSV file from Dropbox
 def load_csv_from_dropbox(file_path):
     dbx = get_dropbox_client()
@@ -196,17 +195,20 @@ def serve_react_app(path):
     else:
         return send_from_directory(app.static_folder, 'index.html')
 
+
 # API route to fetch audit header data
 @app.route('/api/audit_header', methods=['GET'])
 def get_audit_header():
     header_data = load_header_data()
     return jsonify(header_data)
 
+
 # API route to fetch audit detail data
 @app.route('/api/audit_detail', methods=['GET'])
 def get_audit_detail():
     detail_data = load_detail_data()
     return jsonify(detail_data)
+
 
 # API route to submit form responses and save to responses.csv
 @app.route('/api/submit', methods=['POST'])
@@ -283,8 +285,8 @@ def submit_responses():
         logging.error(f"Error in submit_responses: {e}")
         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
 
-# API to get all audits
 
+# API to get all audits
 @app.route('/api/get_audits', methods=['GET'])
 def get_audits():
     # Download the CSV from Dropbox
@@ -351,50 +353,6 @@ def clear_tokens():
     # Remove tokens from the .env file
     set_key(env_file_path, 'DROPBOX_ACCESS_TOKEN', '')
     set_key(env_file_path, 'DROPBOX_REFRESH_TOKEN', '')
-
-
-# OAuth Callback function to re-add tokens after OAuth
-# @app.route('/oauth/callback', methods=['GET'])
-# def oauth_callback():
-#     # Clear existing tokens before starting OAuth
-#     clear_tokens()
-
-#     # Get the authorization code sent from Dropbox
-#     auth_code = request.args.get('code')
-
-#     if auth_code:
-#         # Exchange authorization code for access token
-#         token_url = "https://api.dropboxapi.com/oauth2/token"
-#         data = {
-#             'code': auth_code,
-#             'grant_type': 'authorization_code',
-#             'client_id': DROPBOX_APP_KEY,
-#             'client_secret': DROPBOX_APP_SECRET,
-#             'redirect_uri': 'http://127.0.0.1:5000/oauth/callback'
-#         }
-
-#         response = requests.post(token_url, data=data)
-
-#         if response.status_code == 200:
-#             token_data = response.json()
-#             access_token = token_data.get('access_token')
-#             refresh_token = token_data.get('refresh_token')
-
-#             # Re-add tokens to the environment variables and .env file
-#             update_env_file('DROPBOX_ACCESS_TOKEN', access_token)
-
-#             if refresh_token:
-#                 update_env_file('DROPBOX_REFRESH_TOKEN', refresh_token)
-
-#             # Reload the updated environment variables
-#             load_dotenv()
-
-#             return "Tokens obtained successfully! Access Token: {} Refresh Token: {}".format(access_token, refresh_token)
-#         else:
-#             return "Failed to get token: {}".format(response.text)
-#     else:
-#         return "No authorization code provided."
-
 
 
 # Function to update Heroku config vars
@@ -522,7 +480,6 @@ def get_temperature_chart(over63, under63):
     plt.close()
 
     return send_file(img, mimetype='image/png')
-
 
 
 if __name__ == '__main__':

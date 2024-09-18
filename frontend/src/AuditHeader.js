@@ -326,7 +326,7 @@ function AuditHeader() {
   )}
 </div>
 ))}
-        <button type="submit" className="btn btn-primary">Submit</button>
+        <button type="submit" className="btn btn-primary">Envoyer</button>
       </form>
     </div>
   );
