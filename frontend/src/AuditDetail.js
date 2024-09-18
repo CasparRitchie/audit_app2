@@ -9,6 +9,7 @@
 //   const [comments, setComments] = useState({});
 //   const [images, setImages] = useState({});
 //   const [duplicates, setDuplicates] = useState({});
+//   const [removedQuestions, setRemovedQuestions] = useState({});
 //   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
 //   const [auditId, setAuditId] = useState(null);
 
@@ -16,25 +17,16 @@
 //     let progressData = {};
 
 //     Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
-//       if (!sousChapitres) return; // Add this check to prevent null/undefined sousChapitres
-
 //       Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
-//         if (!paragraphes) return; // Add this check to prevent null/undefined paragraphes
-
 //         let sousChapitreTotalQuestions = 0;
 //         let sousChapitreAnsweredQuestions = 0;
-
 //         let paragrapheProgressData = {};
 
 //         Object.entries(paragraphes || {}).forEach(([paragraphe, sousParagraphes = {}]) => {
-//           if (!sousParagraphes) return; // Add this check to prevent null/undefined sousParagraphes
-
 //           let paragrapheTotalQuestions = 0;
 //           let paragrapheAnsweredQuestions = 0;
 
 //           Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
-//             if (!questions) return; // Add this check to prevent null/undefined questions
-
 //             paragrapheTotalQuestions += questions.length;
 
 //             questions.forEach((question) => {
@@ -103,14 +95,14 @@
 //           localStorage.setItem("auditId", newAuditId);
 //         }
 
-//         updateProgress(calculateProgress(response.data, storedResponses));
+//         updateProgress(calculateProgress(response.data, storedResponses, removedQuestions));
 //       } catch (error) {
 //         console.error('Error fetching data:', error);
 //       }
 //     };
 
 //     fetchData();
-//   }, [calculateProgress, updateProgress]);
+//   }, [calculateProgress, updateProgress, removedQuestions]);
 
 //   const handleInputChange = (event, questionId) => {
 //     const { value } = event.target;
@@ -120,7 +112,7 @@
 //     };
 //     setFormResponses(updatedResponses);
 //     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
-//     updateProgress(calculateProgress(data, updatedResponses));
+//     updateProgress(calculateProgress(data, updatedResponses, removedQuestions));
 //   };
 
 //   const handleCommentChange = (event, questionId) => {
@@ -156,11 +148,26 @@
 //         [id]: [...(prev[id] || []), { ...questionObj, duplicateId }],
 //       };
 
-//       // Recalculate progress including new duplicate
-//       const updatedProgress = calculateProgress(data, formResponses, newDuplicates);
-//       updateProgress(updatedProgress);  // Ensure the progress is updated immediately
+//       const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
+//       updateProgress(updatedProgress);
 //       return newDuplicates;
 //     });
+//   };
+
+//   const handleRemoveQuestion = (sousChapitre, questionId) => {
+//     setRemovedQuestions((prev) => ({
+//       ...prev,
+//       [sousChapitre]: [...(prev[sousChapitre] || []), questionId],
+//     }));
+//     updateProgress(calculateProgress(data, formResponses, removedQuestions));
+//   };
+
+//   const handleReAddQuestion = (sousChapitre, questionObj) => {
+//     setRemovedQuestions((prev) => ({
+//       ...prev,
+//       [sousChapitre]: prev[sousChapitre]?.filter(id => id !== questionObj.id),
+//     }));
+//     updateProgress(calculateProgress(data, formResponses, removedQuestions));
 //   };
 
 //   const handleSubmit = (event) => {
@@ -201,7 +208,6 @@
 //     return <div>Loading audit details...</div>;
 //   }
 
-//   // Helper function to calculate the alternating background
 //   const getBackgroundColor = (index) => index % 2 === 0 ? '#e1e1e1' : '#ffffff';
 
 //   return (
@@ -227,47 +233,86 @@
 //                     {Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
 //                       <div key={paragraphe} id={paragraphe} className="mb-2">
 //                         <h5>{paragraphe}</h5>
+//                         {/* Display removed questions */}
+//                         {(removedQuestions[sousChapitre] || []).length > 0 && (
+//                           <div className="mb-2">
+//                             <h6>Questions Removed:</h6>
+//                             <ul>
+//                               {data[sousChapitre][paragraphe].filter(question => removedQuestions[sousChapitre]?.includes(question.id))
+//                                 .map(question => (
+//                                   <li key={question.id}>
+//                                     {question.question}
+//                                     <button
+//                                       type="button"
+//                                       className="btn btn-success btn-sm ml-2"
+//                                       onClick={() => handleReAddQuestion(sousChapitre, question)}
+//                                     >
+//                                       Re-add
+//                                     </button>
+//                                   </li>
+//                                 ))}
+//                             </ul>
+//                           </div>
+//                         )}
 //                         {Object.entries(sousParagraphes).map(([sousParagraphe, questions]) => (
 //                           <div key={sousParagraphe} className="card mb-2">
 //                             <div className="card-body">
-//                               {questions.reduce((acc, questionObj, questionIndex) => {
+//                               {questions.map((questionObj, questionIndex) => {
 //                                 const allQuestionsAndDuplicates = [
 //                                   questionObj,
 //                                   ...(duplicates[questionObj.id] || [])
 //                                 ];
 
-//                                 allQuestionsAndDuplicates.forEach((item, itemIndex) => {
-//                                   acc.push(
-//                                     <div key={item.id || item.duplicateId} style={{ backgroundColor: getBackgroundColor(questionIndex + itemIndex) }}>
-//                                       {item.duplicateId ? (
-//                                         <DuplicateQuestionComponent
-//                                           duplicate={item}
-//                                           index={itemIndex}
-//                                           formResponses={formResponses}
-//                                           handleInputChange={handleInputChange}
-//                                           handleCommentChange={handleCommentChange}
-//                                           handleImageChange={                                          handleInputChange}
-//                                           comments={comments}
-//                                           images={images}
-//                                         />
-//                                       ) : (
-//                                         <QuestionComponent
-//                                           questionObj={item}
-//                                           formResponses={formResponses}
-//                                           handleInputChange={(event) => handleInputChange(event, item.id, sousChapitre)}
-//                                           handleCommentChange={handleCommentChange}
-//                                           handleImageChange={handleImageChange}
-//                                           handleDuplicate={handleDuplicate}
-//                                           comments={comments}
-//                                           images={images}
-//                                         />
-//                                       )}
-//                                     </div>
-//                                   );
-//                                 });
+//                                 return allQuestionsAndDuplicates.map((item, itemIndex) => {
+//                                   const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
 
-//                                 return acc;
-//                               }, [])}
+//                                   if (!isRemoved) {
+//                                     return (
+//                                       <div
+//                                         key={item.id || item.duplicateId}
+//                                         style={{ backgroundColor: getBackgroundColor(questionIndex + itemIndex) }}
+//                                       >
+//                                         {item.duplicateId ? (
+//                                           <DuplicateQuestionComponent
+//                                             duplicate={item}
+//                                             index={itemIndex}
+//                                             formResponses={formResponses}
+//                                             handleInputChange={handleInputChange}
+//                                             handleCommentChange={handleCommentChange}
+//                                             handleImageChange={handleImageChange}
+//                                             comments={comments}
+//                                             images={images}
+//                                           />
+//                                         ) : (
+//                                           <div style={{ position: 'relative' }}>
+//                                             <QuestionComponent
+//                                               questionObj={item}
+//                                               formResponses={formResponses}
+//                                               handleInputChange={(event) =>
+//                                                 handleInputChange(event, item.id, sousChapitre)
+//                                               }
+//                                               handleCommentChange={handleCommentChange}
+//                                               handleImageChange={handleImageChange}
+//                                               handleDuplicate={handleDuplicate}
+//                                               comments={comments}
+//                                               images={images}
+//                                             />
+//                                             <button
+//                                               type="button"
+//                                               className="btn btn-danger"
+//                                               style={{ position: 'absolute', right: 0, top: 0 }}
+//                                               onClick={() => handleRemoveQuestion(sousChapitre, item.id)}
+//                                             >
+//                                               X
+//                                             </button>
+//                                           </div>
+//                                         )}
+//                                       </div>
+//                                     );
+//                                   }
+//                                   return null;
+//                                 });
+//                               })}
 //                             </div>
 //                           </div>
 //                         ))}
@@ -305,27 +350,17 @@ function AuditDetail({ updateProgress }) {
 
   const calculateProgress = useCallback((auditData = {}, responses = {}) => {
     let progressData = {};
-
     Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
-      if (!sousChapitres) return; // Add this check to prevent null/undefined sousChapitres
-
       Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
-        if (!paragraphes) return; // Add this check to prevent null/undefined paragraphes
-
         let sousChapitreTotalQuestions = 0;
         let sousChapitreAnsweredQuestions = 0;
-
         let paragrapheProgressData = {};
 
         Object.entries(paragraphes || {}).forEach(([paragraphe, sousParagraphes = {}]) => {
-          if (!sousParagraphes) return; // Add this check to prevent null/undefined sousParagraphes
-
           let paragrapheTotalQuestions = 0;
           let paragrapheAnsweredQuestions = 0;
 
           Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
-            if (!questions) return; // Add this check to prevent null/undefined questions
-
             paragrapheTotalQuestions += questions.length;
 
             questions.forEach((question) => {
@@ -461,6 +496,14 @@ function AuditDetail({ updateProgress }) {
     updateProgress(calculateProgress(data, formResponses, removedQuestions));
   };
 
+  const handleReAddQuestion = (sousChapitre, questionObj) => {
+    setRemovedQuestions((prev) => ({
+      ...prev,
+      [sousChapitre]: prev[sousChapitre]?.filter(id => id !== questionObj.id),
+    }));
+    updateProgress(calculateProgress(data, formResponses, removedQuestions));
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData();
@@ -521,73 +564,100 @@ function AuditDetail({ updateProgress }) {
                 </h4>
                 {expandedSousChapitres[sousChapitre] && (
                   <div>
-                    {Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
-                      <div key={paragraphe} id={paragraphe} className="mb-2">
-                        <h5>{paragraphe}</h5>
-                        {Object.entries(sousParagraphes).map(([sousParagraphe, questions]) => (
-                          <div key={sousParagraphe} className="card mb-2">
-                            <div className="card-body">
-                              {questions.map((questionObj, questionIndex) => {
-                                const allQuestionsAndDuplicates = [
-                                  questionObj,
-                                  ...(duplicates[questionObj.id] || [])
-                                ];
+                    {Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
+                      const questions = Object.values(sousParagraphes).flat(); // Extract all questions for the sousParagraphe
+                      return (
+                        <div key={paragraphe} id={paragraphe} className="mb-2">
+                          <h5>{paragraphe}</h5>
 
-                                return allQuestionsAndDuplicates.map((item, itemIndex) => {
-                                  const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
-
-                                  if (!isRemoved) {
-                                    return (
-                                      <div
-                                        key={item.id || item.duplicateId}
-                                        style={{ backgroundColor: getBackgroundColor(questionIndex + itemIndex) }}
+                          {/* Show removed questions and a button to re-add */}
+                          {(removedQuestions[sousChapitre] || []).length > 0 && (
+                            <div className="mb-2">
+                              <h6>Questions Removed:</h6>
+                              <ul>
+                                {questions
+                                  .filter(question => removedQuestions[sousChapitre].includes(question.id))
+                                  .map(question => (
+                                    <li key={question.id}>
+                                      {question.question}
+                                      <button
+                                        type="button"
+                                        className="btn btn-success btn-sm ml-2"
+                                        onClick={() => handleReAddQuestion(sousChapitre, question)}
                                       >
-                                        {item.duplicateId ? (
-                                          <DuplicateQuestionComponent
-                                            duplicate={item}
-                                            index={itemIndex}
-                                            formResponses={formResponses}
-                                            handleInputChange={handleInputChange}
-                                            handleCommentChange={handleCommentChange}
-                                            handleImageChange={handleImageChange}
-                                            comments={comments}
-                                            images={images}
-                                          />
-                                        ) : (
-                                          <div style={{ position: 'relative' }}>
-                                            <QuestionComponent
-                                              questionObj={item}
+                                        Re-add
+                                      </button>
+                                    </li>
+                                  ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {Object.entries(sousParagraphes).map(([sousParagraphe, questions]) => (
+                            <div key={sousParagraphe} className="card mb-2">
+                              <div className="card-body">
+                                {questions.map((questionObj, questionIndex) => {
+                                  const allQuestionsAndDuplicates = [
+                                    questionObj,
+                                    ...(duplicates[questionObj.id] || [])
+                                  ];
+
+                                  return allQuestionsAndDuplicates.map((item, itemIndex) => {
+                                    const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
+
+                                    if (!isRemoved) {
+                                      return (
+                                        <div
+                                          key={item.id || item.duplicateId}
+                                          style={{ backgroundColor: getBackgroundColor(questionIndex + itemIndex) }}
+                                        >
+                                          {item.duplicateId ? (
+                                            <DuplicateQuestionComponent
+                                              duplicate={item}
+                                              index={itemIndex}
                                               formResponses={formResponses}
-                                              handleInputChange={(event) =>
-                                                handleInputChange(event, item.id, sousChapitre)
-                                              }
+                                              handleInputChange={handleInputChange}
                                               handleCommentChange={handleCommentChange}
                                               handleImageChange={handleImageChange}
-                                              handleDuplicate={handleDuplicate}
                                               comments={comments}
                                               images={images}
                                             />
-                                            <button
-                                              type="button"
-                                              className="btn btn-danger"
-                                              style={{ position: 'absolute', right: 0, top: 0 }}
-                                              onClick={() => handleRemoveQuestion(sousChapitre, item.id)}
-                                            >
-                                              X
-                                            </button>
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                });
-                              })}
+                                          ) : (
+                                            <div style={{ position: 'relative' }}>
+                                              <QuestionComponent
+                                                questionObj={item}
+                                                formResponses={formResponses}
+                                                handleInputChange={(event) =>
+                                                  handleInputChange(event, item.id, sousChapitre)
+                                                }
+                                                handleCommentChange={handleCommentChange}
+                                                handleImageChange={handleImageChange}
+                                                handleDuplicate={handleDuplicate}
+                                                comments={comments}
+                                                images={images}
+                                              />
+                                              <button
+                                                type="button"
+                                                className="btn btn-danger"
+                                                style={{ position: 'absolute', right: 0, top: 0 }}
+                                                onClick={() => handleRemoveQuestion(sousChapitre, item.id)}
+                                              >
+                                                X
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  });
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
