@@ -671,3 +671,4 @@ function AuditDetail({ updateProgress }) {
 }
 
 export default AuditDetail;
+
