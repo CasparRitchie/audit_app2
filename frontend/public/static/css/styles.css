@@ -20,11 +20,6 @@ h5 {
 
 }
 
-.answered-question {
-  background-color: #f0f0f0; /* Light grey background */
-  opacity: 0.7; /* Slightly lower opacity */
-  border: 1px solid #ccc; /* Lighter border */
-}
 
 .sidebar-entry-text{
   color: #353939 !important;
@@ -55,5 +50,34 @@ button.btn.btn-primary {
 }
 
 
+button.btn-warning:active {
+  background-color: rgb(72, 71, 163) !important;
+  border-color: rgb(64, 28, 221) !important;
+  color: rgb(235, 175, 44) !important;
+}
+
+.custom-btn-warning {
+  background-color: rgb(255, 162, 0) !important;
+  border-color: rgb(255, 193, 7);
+  color: white;
+}
+
+.custom-btn-warning:hover {
+  background-color: rgb(255, 210, 40);
+  border-color: rgb(255, 210, 40);
+}
+
+.custom-btn-warning:active, .custom-btn-warning.active {
+  background-color: rgb(72, 71, 163);
+  border-color: rgb(64, 28, 221);
+  color: white;
+}
+
+/* Custom secondary for unselected options */
+.custom-btn-secondary {
+  background-color: #e6ebee;
+  border-color: #6c757d;
+  color: white;
+}
 
 /*# sourceMappingURL=styles.css.map */

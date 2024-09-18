@@ -50,9 +50,9 @@ function QuestionComponent({
           // Define color classes for selected options
           const getButtonColor = (option) => {
             if (option === 'C' || option === 'OK') return 'btn-success'; // Green for "C" or "OK"
-            if (option === 'PC') return 'btn-warning'; // Amber for "PC"
+            if (option === 'PC') return 'custom-btn-warning'; // Custom class for "PC"
             if (option === 'NC' || option === 'KO') return 'btn-danger'; // Red for "NC" or "KO"
-            return 'btn-secondary'; // Default grey for unselected options
+            return 'custom-btn-secondary'; // Default grey for unselected options
           };
 
           return (
@@ -68,7 +68,7 @@ function QuestionComponent({
                 onChange={(event) => handleInputChange(event, questionObj.id)}
               />
               <label
-                className={`btn ${isSelected ? getButtonColor(option) : 'btn-secondary'}`} // Set button color
+                className={`btn ${isSelected ? getButtonColor(option) : 'custom-btn-secondary'}`} // Set button color
                 htmlFor={`${option}-${questionObj.id}`}
               >
                 {option}
