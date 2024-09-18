@@ -12,14 +12,14 @@ function AuditDetail({ updateProgress }) {
   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
   const [auditId, setAuditId] = useState(null);
 
-  const calculateProgress = useCallback((auditData = {}, responses = {}, currentDuplicates = duplicates) => {
+  const calculateProgress = useCallback((auditData = {}, responses = {}) => {
     let progressData = {};
 
     Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
-      if (!sousChapitres) return;
+      if (!sousChapitres) return; // Add this check to prevent null/undefined sousChapitres
 
       Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
-        if (!paragraphes) return;
+        if (!paragraphes) return; // Add this check to prevent null/undefined paragraphes
 
         let sousChapitreTotalQuestions = 0;
         let sousChapitreAnsweredQuestions = 0;
@@ -27,13 +27,13 @@ function AuditDetail({ updateProgress }) {
         let paragrapheProgressData = {};
 
         Object.entries(paragraphes || {}).forEach(([paragraphe, sousParagraphes = {}]) => {
-          if (!sousParagraphes) return;
+          if (!sousParagraphes) return; // Add this check to prevent null/undefined sousParagraphes
 
           let paragrapheTotalQuestions = 0;
           let paragrapheAnsweredQuestions = 0;
 
           Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
-            if (!questions) return;
+            if (!questions) return; // Add this check to prevent null/undefined questions
 
             paragrapheTotalQuestions += questions.length;
 
@@ -42,7 +42,7 @@ function AuditDetail({ updateProgress }) {
                 paragrapheAnsweredQuestions += 1;
               }
 
-              const duplicateQuestions = currentDuplicates[question.id] || [];
+              const duplicateQuestions = duplicates[question.id] || [];
               paragrapheTotalQuestions += duplicateQuestions.length;
 
               duplicateQuestions.forEach((duplicate) => {

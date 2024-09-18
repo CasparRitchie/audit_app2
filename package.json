@@ -5,6 +5,8 @@
     "heroku-postbuild": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
-    "dropbox": "^10.34.0"
+    "bootstrap": "^5.3.3",
+    "dropbox": "^10.34.0",
+    "react-bootstrap": "^2.10.4"
   }
 }
