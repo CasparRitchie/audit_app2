@@ -1,5 +1,7 @@
 import React from 'react';
-import classNames from 'classnames'; // For conditional class assignment
+import { FaCamera } from 'react-icons/fa'; // Import camera icon from react-icons
+import classNames from 'classnames';
+
 
 function QuestionComponent({
   questionObj,
@@ -7,13 +9,12 @@ function QuestionComponent({
   handleInputChange,
   handleCommentChange,
   handleImageChange,
-  handleDuplicate,
   comments = {},
   images = {},
 }) {
   const responseValue = formResponses[questionObj.id]?.response || '';
   const isAnswered = responseValue !== '';
-  
+
   const showAlert = () => {
     if (questionObj.information) {
       alert(questionObj.information);
@@ -92,18 +93,30 @@ function QuestionComponent({
           className="form-control"
           value={comments[questionObj.id] || ''}
           onChange={(event) => handleCommentChange(event, questionObj.id)}
-          placeholder="Add a comment"
+          placeholder="..."
         />
       </div>
 
       {/* Image Upload Field */}
       <div className="flex-item image-upload" style={{ flexBasis: '15%', flexShrink: 0 }}>
+        <label htmlFor={`file-input-${questionObj.id}`} className="file-label">
+          <FaCamera style={{ fontSize: '1.5rem', cursor: 'pointer' }} />
+        </label>
         <input
           type="file"
+          id={`file-input-${questionObj.id}`}
           className="form-control-file"
           accept="image/*"
+          multiple  // Allow multiple file uploads
+          style={{ display: 'none' }}  // Hide the input
           onChange={(event) => handleImageChange(event, questionObj.id)}
         />
+        {/* Optional: You can display uploaded filenames here */}
+        <div className="uploaded-files">
+          {images[questionObj.id] && Array.from(images[questionObj.id]).map((file, index) => (
+            <span key={index} style={{ fontSize: '0.8rem' }}>{file.name}</span>
+          ))}
+        </div>
       </div>
     </div>
   );
