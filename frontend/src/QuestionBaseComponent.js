@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaCamera } from 'react-icons/fa'; // Import camera icon from react-icons
 import classNames from 'classnames';
+import ToggleableRadioButtons from './ToggleableRadioButtons'; // Import the new component
 
 function QuestionBaseComponent({
   questionObj,
@@ -14,7 +15,9 @@ function QuestionBaseComponent({
   comments = {},
   images = {},
 }) {
-  const responseValue = formResponses[questionObj.id || questionObj.duplicateId]?.response || '';
+  const questionId = questionObj.id || questionObj.duplicateId;
+
+  const responseValue = formResponses[questionId]?.response || '';
   const isAnswered = responseValue !== '';
 
   const showAlert = () => {
@@ -22,8 +25,6 @@ function QuestionBaseComponent({
       alert(questionObj.information);
     }
   };
-
-  const questionId = questionObj.id || questionObj.duplicateId;
 
   return (
     <div
@@ -56,38 +57,12 @@ function QuestionBaseComponent({
             className="form-control"
           />
         ) : (
-          <div className="btn-group" role="group">
-            {questionObj.response_type.split('/').map((option) => {
-              const isSelected = formResponses[questionId]?.response === option;
-              const getButtonColor = (option) => {
-                if (option === 'C' || option === 'OK') return 'btn-success';
-                if (option === 'PC') return 'custom-btn-warning';
-                if (option === 'NC' || option === 'KO') return 'btn-danger';
-                return 'custom-btn-secondary';
-              };
-
-              return (
-                <React.Fragment key={option}>
-                  <input
-                    type="radio"
-                    className="btn-check"
-                    name={`options-${questionId}`}
-                    id={`${option}-${questionId}`}
-                    autoComplete="off"
-                    value={option}
-                    checked={isSelected}
-                    onChange={(event) => handleInputChange(event, questionId)}
-                  />
-                  <label
-                    className={`btn ${isSelected ? getButtonColor(option) : 'custom-btn-secondary'}`}
-                    htmlFor={`${option}-${questionId}`}
-                  >
-                    {option}
-                  </label>
-                </React.Fragment>
-              );
-            })}
-          </div>
+          <ToggleableRadioButtons
+            questionId={questionId}
+            options={questionObj.response_type.split('/')}
+            formResponses={formResponses}
+            handleInputChange={handleInputChange}
+          />
         )}
       </div>
 
@@ -111,11 +86,10 @@ function QuestionBaseComponent({
           id={`file-input-${questionId}`}
           className="form-control-file"
           accept="image/*"
-          multiple  // Allow multiple file uploads
-          style={{ display: 'none' }}  // Hide the input
+          multiple
+          style={{ display: 'none' }}
           onChange={(event) => handleImageChange(event, questionId)}
         />
-        {/* Optional: You can display uploaded filenames here */}
         <div className="uploaded-files">
           {images[questionId] && Array.from(images[questionId]).map((file, index) => (
             <span key={index} style={{ fontSize: '0.8rem' }}>{file.name}</span>

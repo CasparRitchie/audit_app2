@@ -115,4 +115,14 @@ button.btn-warning:active {
   cursor: pointer;
 }
 
+
+.sticky-header {
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10; /* To ensure the header is above other elements */
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+}
 /*# sourceMappingURL=styles.css.map */

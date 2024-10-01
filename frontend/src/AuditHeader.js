@@ -5,7 +5,7 @@ function AuditHeader() {
   const [headerData, setHeaderData] = useState([]);
   const [headerResponses, setHeaderResponses] = useState({});
   const [calculatedFields, setCalculatedFields] = useState({});
-  const [isExpanded, setIsExpanded] = useState(true); // State for collapse/expand
+  const [isExpanded, setIsExpanded] = useState(false); // State for collapse/expand
 
   const saveToLocalStorage = (key, value) => {
     const existingData = JSON.parse(localStorage.getItem("auditHeader")) || {};
@@ -88,7 +88,7 @@ function AuditHeader() {
   return (
     <div>
       <h2 style={{ cursor: 'pointer' }} onClick={toggleExpand}>
-        Informations générales {isExpanded ? '▼' : '▶'}
+      {isExpanded ? '▼' : '▶'} Informations générales
       </h2>
       {isExpanded && (
         <form onSubmit={handleSubmit} className="mb-4">
