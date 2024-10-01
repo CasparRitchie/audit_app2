@@ -283,98 +283,114 @@ function AuditDetail({ updateProgress }) {
                 {expandedSousChapitres[sousChapitre] && (
                   <div>
                     {Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-  // Combine original questions and duplicates into one flat array
-  const allQuestionsFlattened = [];
+                      const questions = Object.values(sousParagraphes).flat(); // Extract all questions for the sousParagraphe
+                      return (
+                        <div key={paragraphe} id={paragraphe} className="mb-2">
+                          <h5>{paragraphe}</h5>
 
-  Object.entries(sousParagraphes).forEach(([_, questions]) => {
-    questions.forEach((questionObj) => {
-      // Push original question
-      allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
-      // Push duplicates if any
-      (duplicates[questionObj.id] || []).forEach((duplicate) => {
-        allQuestionsFlattened.push({ ...duplicate, isDuplicate: true });
-      });
-    });
-  });
+                          {/* Show removed questions and a button to re-add */}
+                          {(removedQuestions[sousChapitre] || []).length > 0 && (
+                            <div className="mb-2">
+                              <h6>Questions Removed:</h6>
+                              <ul>
+                                {questions
+                                  .filter(question => removedQuestions[sousChapitre].includes(question.id))
+                                  .map(question => (
+                                    <li key={question.id}>
+                                      {question.question}
+                                      <button
+                                        type="button"
+                                        className="btn btn-success btn-sm ml-2"
+                                        onClick={() => handleReAddQuestion(sousChapitre, question)}
+                                      >
+                                        R
+                                      </button>
+                                    </li>
+                                  ))}
+                              </ul>
+                            </div>
+                          )}
 
-  // Now that we have a flat list, we can render each question/duplicate with the correct alternating background
-  return (
-    <div key={paragraphe} id={paragraphe} className="mb-2">
-      <h5>{paragraphe}</h5>
-
-      {allQuestionsFlattened.map((item, index) => {
-        const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
-
-        if (!isRemoved) {
-          return (
-            <div
-              key={item.duplicateId || item.id} // Unique key for original or duplicate question
-              style={{
-                backgroundColor: getBackgroundColor(index), // Unified shading for originals and duplicates
-                marginLeft: 0, // Ensure alignment
-              }}
-            >
-              {item.isDuplicate ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <DuplicateQuestionComponent
-                    duplicate={item}
-                    index={index}
-                    formResponses={formResponses}
-                    handleInputChange={handleInputChange}
-                    handleCommentChange={handleCommentChange}
-                    handleImageChange={handleImageChange}
-                    comments={comments}
-                    images={images}
-                  />
-                  {/* Remove button for duplicate */}
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => handleRemoveDuplicate(item.duplicateId)} // Removes the duplicate
-                  >
-                    X
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <QuestionComponent
-                    questionObj={item}
-                    formResponses={formResponses}
-                    handleInputChange={handleInputChange}
-                    handleCommentChange={handleCommentChange}
-                    handleImageChange={handleImageChange}
-                    handleDuplicate={handleDuplicate}
-                    comments={comments}
-                    images={images}
-                  />
-                  {/* Duplicate and Remove buttons for original question */}
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => handleDuplicate(item)}
-                    >
-                      +
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-danger"
-                      onClick={() => handleRemoveQuestion(sousChapitre, item.id)}
-                    >
-                      X
-                    </button>
-                  </div>
-                </div>
-              )}
+                          {Object.entries(sousParagraphes).map(([sousParagraphe, questions]) => (
+                            <div key={sousParagraphe} className="card mb-2">
+                              <div className="card-body">
+                              {questions.map((questionObj, questionIndex) => {
+  const allQuestionsAndDuplicates = [
+    questionObj,
+    ...(duplicates[questionObj.id] || [])
+  ];
+  return allQuestionsAndDuplicates.map((item, itemIndex) => {
+    const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
+    if (!isRemoved) {
+      return (
+        <div
+          key={item.duplicateId || item.id} // Unique key for original or duplicate question
+          style={{ backgroundColor: getBackgroundColor(questionIndex + itemIndex), marginLeft: 0 }} // Reset margin for alignment
+        >
+          {item.duplicateId ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <DuplicateQuestionComponent
+                duplicate={item}
+                index={itemIndex}
+                formResponses={formResponses}
+                handleInputChange={handleInputChange}
+                handleCommentChange={handleCommentChange}
+                handleImageChange={handleImageChange}
+                comments={comments}
+                images={images}
+              />
+              {/* Remove button for duplicate */}
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => handleRemoveDuplicate(item.duplicateId)} // Removes the duplicate
+              >
+                X
+              </button>
             </div>
-          );
-        }
-
-        return null;
-      })}
-    </div>
-  );
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <QuestionComponent
+                questionObj={item}
+                formResponses={formResponses}
+                handleInputChange={handleInputChange}
+                handleCommentChange={handleCommentChange}
+                handleImageChange={handleImageChange}
+                handleDuplicate={handleDuplicate}
+                comments={comments}
+                images={images}
+              />
+              {/* Duplicate and Remove buttons for original question */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => handleDuplicate(item)}
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => handleRemoveQuestion(sousChapitre, item.id)}
+                >
+                  X
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  });
 })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
