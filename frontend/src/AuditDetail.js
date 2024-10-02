@@ -110,19 +110,20 @@ function AuditDetail({ updateProgress }) {
     fetchData();
   }, [calculateProgress, updateProgress, removedQuestions]);
 
+  // Sticky Header Effect for h4 elements
   useEffect(() => {
     const handleScroll = () => {
-      const headers = document.querySelectorAll('.paragraphe-header');
-      const headerHeight = headers[0]?.offsetHeight || 0;
+      const headers = document.querySelectorAll('h4');
+      headers.forEach((header, index) => {
+        const nextHeader = headers[index + 1]; // Get the next h4 element
+        const headerRect = header.getBoundingClientRect();
+        const nextHeaderRect = nextHeader?.getBoundingClientRect();
 
-      headers.forEach((header) => {
-        const section = header.nextElementSibling;
-        const sectionRect = section.getBoundingClientRect();
-
-        if (sectionRect.top <= headerHeight && sectionRect.bottom >= headerHeight) {
-          header.classList.add('sticky-header');
+        // When the next header is about to overlap the current sticky header
+        if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
+          header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
         } else {
-          header.classList.remove('sticky-header');
+          header.style.transform = 'translateY(0)'; // Reset transformation
         }
       });
     };
@@ -171,11 +172,14 @@ function AuditDetail({ updateProgress }) {
 
   const handleDuplicate = (questionObj) => {
     const { id } = questionObj;
-    const duplicateId = `${id}-duplicate-${Date.now()}`;  // Ensuring a unique ID with timestamp
+    // Get the number of existing duplicates and add 1 to give the new duplicate its number
+    const duplicateNumber = (duplicates[id]?.length || 0) + 1;
+    const duplicateId = `${id}-duplicate-${Date.now()}`;  // Unique ID with timestamp
+
     setDuplicates(prev => {
       const newDuplicates = {
         ...prev,
-        [id]: [...(prev[id] || []), { ...questionObj, duplicateId }],
+        [id]: [...(prev[id] || []), { ...questionObj, duplicateId, index: duplicateNumber }], // Add index for numbering
       };
 
       const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
@@ -281,8 +285,8 @@ function AuditDetail({ updateProgress }) {
             <h3>{chapitre}</h3>
             {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
               <div key={sousChapitre} className="mb-3" id={sousChapitre}>
-                <h4>
-                  <button
+              <h4 className="paragraphe-header">
+              <button
                     type="button"
                     className="btn btn-link"
                     onClick={() => toggleSousChapitre(sousChapitre)}
