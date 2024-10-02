@@ -113,13 +113,30 @@ function AuditDetail({ updateProgress }) {
   // Sticky Header Effect for h4 elements
   useEffect(() => {
     const handleScroll = () => {
-      const headers = document.querySelectorAll('h4');
-      headers.forEach((header, index) => {
-        const nextHeader = headers[index + 1]; // Get the next h4 element
+      const h3Headers = document.querySelectorAll('h3');
+      const h4Headers = document.querySelectorAll('h4');
+
+      // Sticky behavior for h3 elements
+      h3Headers.forEach((header, index) => {
+        const nextHeader = h3Headers[index + 1]; // Get the next h3 element
         const headerRect = header.getBoundingClientRect();
         const nextHeaderRect = nextHeader?.getBoundingClientRect();
 
-        // When the next header is about to overlap the current sticky header
+        // When the next h3 is about to overlap the current sticky h3
+        if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
+          header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
+        } else {
+          header.style.transform = 'translateY(0)'; // Reset transformation
+        }
+      });
+
+      // Sticky behavior for h3 and h4 elements
+      h4Headers.forEach((header, index) => {
+        const nextHeader = h4Headers[index + 1]; // Get the next h4 element
+        const headerRect = header.getBoundingClientRect();
+        const nextHeaderRect = nextHeader?.getBoundingClientRect();
+
+        // When the next h4 is about to overlap the current sticky h4
         if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
           header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
         } else {

@@ -116,13 +116,23 @@ button.btn-warning:active {
 }
 
 
-.paragraphe-header {
-  position: -webkit-sticky !important; /* For Safari */
-  position: sticky !important;
-  top: 0 !important;
-  background-color: white !important;
-  z-index: 10 !important; /* To ensure the header is above other elements */
-  padding: 10px 0 !important;
-  border-bottom: 1px solid #ccc !important;
+h3 {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0; /* Sticks at the very top */
+  background-color: #D30E7F; /* Optional */
+  z-index: 20; /* Higher than h4 so they don't overlap */
+  padding: 5px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+h4 {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 50px; /* Sticks just below h3 */
+  background-color: #fff;
+  z-index: 10;
+  padding: 5px 0;
+  border-bottom: 1px solid #ccc;
 }
 /*# sourceMappingURL=styles.css.map */
