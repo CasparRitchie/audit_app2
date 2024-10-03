@@ -287,7 +287,7 @@ function QuestionBaseComponent({
       className={classNames('form-group d-flex flex-nowrap align-items-center justify-content', { 'answered-question': isAnswered })}
     >
       {/* Question Label */}
-      <div className="flex-item question" style={{ flexBasis: '20%', flexShrink: 0 }}>
+      <div className="flex-item question" style={{ flexBasis: '200px', flexShrink: 0 }}>
         <label>
           {questionObj.question} {isDuplicate && `(Duplicate ${questionObj.index !== undefined ? questionObj.index + 1 : 1})`}
           {questionObj.information && (
