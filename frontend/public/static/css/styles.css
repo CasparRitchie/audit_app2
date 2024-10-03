@@ -6,8 +6,13 @@ h2 {
 h3 {
   color: #FFFFFF  !important;
   background-color: #D30E7F;
-  font-size: calc(2.325rem + .9vw) !important
-
+  font-size: calc(2.325rem + .9vw) !important;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0; /* Sticks at the very top */
+  z-index: 20; /* Higher than h4 so they don't overlap */
+  padding: 5px 0;
+  border-bottom: 1px solid #ccc;
 }
 
 h4 {
@@ -116,20 +121,12 @@ button.btn-warning:active {
 }
 
 
-h3 {
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0; /* Sticks at the very top */
-  background-color: #D30E7F; /* Optional */
-  z-index: 20; /* Higher than h4 so they don't overlap */
-  padding: 5px 0;
-  border-bottom: 1px solid #ccc;
-}
+
 
 h4 {
   position: -webkit-sticky;
   position: sticky;
-  top: 70px !important; /* Sticks just below h3 */
+  top: 60px !important; /* Sticks just below h3 */
   background-color: #fff;
   z-index: 10;
   padding: 5px 0;

@@ -293,6 +293,102 @@ function AuditDetail({ updateProgress }) {
     </div>
   );
 
+  // return (
+  //   <div>
+  //     <h2>Grilles de l'audit</h2>
+  //     <form onSubmit={handleSubmit}>
+  //       {data && Object.entries(data).map(([chapitre, sousChapitres]) => (
+  //         <div key={chapitre}>
+  //           <h3>{chapitre}</h3>
+  //           {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
+  //             <div key={sousChapitre} className="mb-3" id={sousChapitre}>
+  //             <h4 className="paragraphe-header">
+  //             <button
+  //                   type="button"
+  //                   className="btn btn-link"
+  //                   onClick={() => toggleSousChapitre(sousChapitre)}
+  //                 >
+  //                   {expandedSousChapitres[sousChapitre] ? '▼' : '▶'} {sousChapitre}
+  //                 </button>
+  //               </h4>
+  //               {expandedSousChapitres[sousChapitre] && (
+  //                 <div>
+  //                   {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
+  //                     const allQuestionsFlattened = [];
+
+  //                     sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
+  //                       questions.forEach((questionObj) => {
+  //                         allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
+  //                         (duplicates[questionObj.id] || []).forEach((duplicate) => {
+  //                           allQuestionsFlattened.push({ ...duplicate, isDuplicate: true });
+  //                         });
+  //                       });
+  //                     });
+
+  //                     return (
+  //                       <div key={paragraphe} id={paragraphe} className="mb-2">
+  //                         <h5>{paragraphe}</h5>
+
+  //                         {(removedQuestions[sousChapitre] || []).length > 0 && (
+  //                           <div className="mb-2">
+  //                             <h6>Questions Removed:</h6>
+  //                             <ul>
+  //                               {allQuestionsFlattened
+  //                                 .filter(question => removedQuestions[sousChapitre].includes(question.id))
+  //                                 .map(question => (
+  //                                   <li key={question.id}>
+  //                                     {question.question}
+  //                                     <button
+  //                                       type="button"
+  //                                       className="btn btn-success btn-sm ml-2"
+  //                                       onClick={() => handleReAddQuestion(sousChapitre, question)}
+  //                                     >
+  //                                       Re-add
+  //                                     </button>
+  //                                   </li>
+  //                                 ))}
+  //                             </ul>
+  //                           </div>
+  //                         )}
+
+  //                         {allQuestionsFlattened.map((item, index) => {
+  //                           const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
+  //                           if (!isRemoved) {
+  //                             return (
+  //                               <div
+  //                                 key={item.duplicateId || item.id}
+  //                                 style={{ backgroundColor: getBackgroundColor(index), marginLeft: 0 }}
+  //                               >
+  //                                 <QuestionBaseComponent
+  //                                   questionObj={item}
+  //                                   formResponses={formResponses}
+  //                                   handleInputChange={handleInputChange}
+  //                                   handleCommentChange={handleCommentChange}
+  //                                   handleImageChange={handleImageChange}
+  //                                   isDuplicate={item.isDuplicate}
+  //                                   handleDuplicate={item.isDuplicate ? null : handleDuplicate}
+  //                                   handleRemove={item.isDuplicate ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
+  //                                   comments={comments}
+  //                                   images={images}
+  //                                 />
+  //                               </div>
+  //                             );
+  //                           }
+  //                           return null;
+  //                         })}
+  //                       </div>
+  //                     );
+  //                   })}
+  //                 </div>
+  //               )}
+  //             </div>
+  //           ))}
+  //         </div>
+  //       ))}
+  //       <button type="submit" className="btn btn-primary">Envoyer</button>
+  //     </form>
+  //   </div>
+  // );
   return (
     <div>
       <h2>Grilles de l'audit</h2>
@@ -302,8 +398,8 @@ function AuditDetail({ updateProgress }) {
             <h3>{chapitre}</h3>
             {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
               <div key={sousChapitre} className="mb-3" id={sousChapitre}>
-              <h4 className="paragraphe-header">
-              <button
+                <h4 className="paragraphe-header">
+                  <button
                     type="button"
                     className="btn btn-link"
                     onClick={() => toggleSousChapitre(sousChapitre)}
@@ -314,8 +410,9 @@ function AuditDetail({ updateProgress }) {
                 {expandedSousChapitres[sousChapitre] && (
                   <div>
                     {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-                      const allQuestionsFlattened = [];
+                      const uniqueId = `${sousChapitre}-${paragraphe}`; // Unique ID
 
+                      const allQuestionsFlattened = [];
                       sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
                         questions.forEach((questionObj) => {
                           allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
@@ -326,7 +423,7 @@ function AuditDetail({ updateProgress }) {
                       });
 
                       return (
-                        <div key={paragraphe} id={paragraphe} className="mb-2">
+                        <div key={uniqueId} id={uniqueId} className="mb-2"> {/* Update the ID here */}
                           <h5>{paragraphe}</h5>
 
                           {(removedQuestions[sousChapitre] || []).length > 0 && (
