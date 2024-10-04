@@ -35,8 +35,7 @@ DROPBOX_APP_SECRET = os.getenv('DROPBOX_APP_SECRET')
 logging.basicConfig(level=logging.DEBUG)
 
 # Initialize the Flask app
-# app = Flask(__name__, static_folder="../frontend/build", static_url_path="")
-app = Flask(__name__, static_folder=os.path.abspath("../frontend/build"), static_url_path="")
+app = Flask(__name__, static_folder="../frontend/build", static_url_path="")
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Dropbox paths
