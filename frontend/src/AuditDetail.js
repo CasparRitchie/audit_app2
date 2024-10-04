@@ -189,18 +189,20 @@ function AuditDetail({ updateProgress }) {
 
   const handleDuplicate = (questionObj) => {
     const { id } = questionObj;
-    // Get the number of existing duplicates and add 1 to give the new duplicate its number
-    const duplicateNumber = (duplicates[id]?.length || 0) + 1;
+
+    // Create a unique duplicateId for each duplicate question
     const duplicateId = `${id}-duplicate-${Date.now()}`;  // Unique ID with timestamp
 
-    setDuplicates(prev => {
+    setDuplicates((prev) => {
       const newDuplicates = {
         ...prev,
-        [id]: [...(prev[id] || []), { ...questionObj, duplicateId, index: duplicateNumber }], // Add index for numbering
+        [id]: [...(prev[id] || []), { ...questionObj, duplicateId }], // Assign unique duplicateId
       };
 
+      // Update progress after duplication
       const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
       updateProgress(updatedProgress);
+
       return newDuplicates;
     });
   };
