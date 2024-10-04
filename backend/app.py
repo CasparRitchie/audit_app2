@@ -16,14 +16,13 @@ import matplotlib
 matplotlib.use('Agg')  # Use Agg backend for non-GUI environments
 
 
-
 # Load environment variables from .env file if present
 load_dotenv()
 
-print("Access Token:", os.getenv('DROPBOX_ACCESS_TOKEN'))
-print("App Key:", os.getenv('DROPBOX_APP_KEY'))
-print("Refresh Token:", os.getenv('DROPBOX_REFRESH_TOKEN'))
-print("App Secret:", os.getenv('DROPBOX_APP_SECRET'))
+# print("Access Token:", os.getenv('DROPBOX_ACCESS_TOKEN'))
+# print("App Key:", os.getenv('DROPBOX_APP_KEY'))
+# print("Refresh Token:", os.getenv('DROPBOX_REFRESH_TOKEN'))
+# print("App Secret:", os.getenv('DROPBOX_APP_SECRET'))
 
 # Get Dropbox Access Token from environment variable
 DROPBOX_ACCESS_TOKEN = os.getenv('DROPBOX_ACCESS_TOKEN')
