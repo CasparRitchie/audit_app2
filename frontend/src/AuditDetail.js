@@ -85,14 +85,14 @@ function AuditDetail({ updateProgress }) {
     const fetchData = async () => {
       try {
         const response = await axios.get('/api/audit_detail');
-        setData(response.data);
-        const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
-        const storedAuditId = localStorage.getItem("auditId");
+        setData(response.data); // This should trigger the progress calculation in another useEffect
 
+        const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
         if (storedResponses) {
           setFormResponses(storedResponses);
         }
 
+        const storedAuditId = localStorage.getItem("auditId");
         if (storedAuditId) {
           setAuditId(storedAuditId);
         } else {
@@ -100,8 +100,6 @@ function AuditDetail({ updateProgress }) {
           setAuditId(newAuditId);
           localStorage.setItem("auditId", newAuditId);
         }
-
-        updateProgress(calculateProgress(response.data, storedResponses, removedQuestions));
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -154,14 +152,22 @@ function AuditDetail({ updateProgress }) {
 
   const handleInputChange = (event, questionId) => {
     const { value } = event.target;
-    const updatedResponses = {
-      ...formResponses,
-      [questionId]: { ...formResponses[questionId], response: value },
-    };
-    setFormResponses(updatedResponses);
-    localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
-    updateProgress(calculateProgress(data, updatedResponses, removedQuestions));
+    setFormResponses(prevResponses => {
+      const updatedResponses = {
+        ...prevResponses,
+        [questionId]: { ...prevResponses[questionId], response: value },
+      };
+      localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+      return updatedResponses;
+    });
   };
+
+  // Progress update after form responses are updated
+  useEffect(() => {
+    if (data) {
+      updateProgress(calculateProgress(data, formResponses, removedQuestions));
+    }
+  }, [formResponses, data, removedQuestions, calculateProgress, updateProgress]);
 
   const handleCommentChange = (event, questionId) => {
     const { value } = event.target;
@@ -189,20 +195,18 @@ function AuditDetail({ updateProgress }) {
 
   const handleDuplicate = (questionObj) => {
     const { id } = questionObj;
-
-    // Create a unique duplicateId for each duplicate question
+    // Get the number of existing duplicates and add 1 to give the new duplicate its number
+    const duplicateNumber = (duplicates[id]?.length || 0) + 1;
     const duplicateId = `${id}-duplicate-${Date.now()}`;  // Unique ID with timestamp
 
-    setDuplicates((prev) => {
+    setDuplicates(prev => {
       const newDuplicates = {
         ...prev,
-        [id]: [...(prev[id] || []), { ...questionObj, duplicateId }], // Assign unique duplicateId
+        [id]: [...(prev[id] || []), { ...questionObj, duplicateId, index: duplicateNumber }], // Add index for numbering
       };
 
-      // Update progress after duplication
       const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
       updateProgress(updatedProgress);
-
       return newDuplicates;
     });
   };

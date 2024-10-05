@@ -186,15 +186,14 @@ def load_detail_data():
     return hierarchical_data
 
 
-# # Serve React App
-# @app.route('/', defaults={'path': ''})
-# @app.route('/<path:path>')
-# def serve_react_app(path):
-#     if os.path.exists(os.path.join(app.static_folder, path)):
-#         return send_from_directory(app.static_folder, path)
-#     else:
-#         return send_from_directory(app.static_folder, 'index.html')
-
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    if os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 
 # API route to fetch audit header data
@@ -482,15 +481,6 @@ def get_temperature_chart(over63, under63):
 
     return send_file(img, mimetype='image/png')
 
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react_app(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        print(f"Serving index.html for path: {path}")
-        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
