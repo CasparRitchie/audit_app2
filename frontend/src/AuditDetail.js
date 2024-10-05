@@ -361,21 +361,21 @@ function AuditDetail({ updateProgress }) {
                             <div className="mb-2">
                               <h6>Questions Removed:</h6>
                               <ul>
-  {allQuestionsFlattened
-    .filter(question => removedQuestions[sousChapitre].includes(question.id || question.duplicateId))
-    .map(question => (
-      <li key={question.duplicateId || `removed-${question.id}`}>
-        {question.question}
-        <button
-          type="button"
-          className="btn btn-success btn-sm ml-2"
-          onClick={() => handleReAddQuestion(sousChapitre, question)}
-        >
-          Re-add
-        </button>
-      </li>
-    ))}
-</ul>
+                                {allQuestionsFlattened
+                                  .filter(question => removedQuestions[sousChapitre].includes(question.id || question.duplicateId))
+                                  .map(question => (
+                                    <li key={question.duplicateId || `removed-${question.id}`}>
+                                      {question.question}
+                                      <button
+                                        type="button"
+                                        className="btn btn-success btn-sm ml-2"
+                                        onClick={() => handleReAddQuestion(sousChapitre, question)}
+                                      >
+                                        Rajouter
+                                      </button>
+                                    </li>
+                                  ))}
+                              </ul>
                             </div>
                           )}
 
