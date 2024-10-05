@@ -16,7 +16,6 @@ import matplotlib
 matplotlib.use('Agg')  # Use Agg backend for non-GUI environments
 
 
-
 # Load environment variables from .env file if present
 load_dotenv()
 
@@ -187,6 +186,15 @@ def load_detail_data():
     return hierarchical_data
 
 # Serve React App
+# @app.route('/', defaults={'path': ''})
+# @app.route('/<path:path>')
+# def serve_react_app(path):
+#     if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+#         return send_from_directory(app.static_folder, path)
+#     else:
+#         return send_from_directory(app.static_folder, 'index.html')
+
+# Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
@@ -194,6 +202,7 @@ def serve_react_app(path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
+
 
 
 # API route to fetch audit header data

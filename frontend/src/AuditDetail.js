@@ -81,6 +81,15 @@ function AuditDetail({ updateProgress }) {
     return progressData;
   }, [duplicates]);
 
+
+  useEffect(() => {
+    if (data) {
+      const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
+      updateProgress(updatedProgress);
+    }
+  }, [data, formResponses, duplicates, removedQuestions, updateProgress, calculateProgress]);
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -113,13 +122,30 @@ function AuditDetail({ updateProgress }) {
   // Sticky Header Effect for h4 elements
   useEffect(() => {
     const handleScroll = () => {
-      const headers = document.querySelectorAll('h4');
-      headers.forEach((header, index) => {
-        const nextHeader = headers[index + 1]; // Get the next h4 element
+      const h3Headers = document.querySelectorAll('h3');
+      const h4Headers = document.querySelectorAll('h4');
+
+      // Sticky behavior for h3 elements
+      h3Headers.forEach((header, index) => {
+        const nextHeader = h3Headers[index + 1]; // Get the next h3 element
         const headerRect = header.getBoundingClientRect();
         const nextHeaderRect = nextHeader?.getBoundingClientRect();
 
-        // When the next header is about to overlap the current sticky header
+        // When the next h3 is about to overlap the current sticky h3
+        if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
+          header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
+        } else {
+          header.style.transform = 'translateY(0)'; // Reset transformation
+        }
+      });
+
+      // Sticky behavior for h3 and h4 elements
+      h4Headers.forEach((header, index) => {
+        const nextHeader = h4Headers[index + 1]; // Get the next h4 element
+        const headerRect = header.getBoundingClientRect();
+        const nextHeaderRect = nextHeader?.getBoundingClientRect();
+
+        // When the next h4 is about to overlap the current sticky h4
         if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
           header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
         } else {
@@ -172,57 +198,50 @@ function AuditDetail({ updateProgress }) {
 
   const handleDuplicate = (questionObj) => {
     const { id } = questionObj;
-    const duplicateNumber = (duplicates[id]?.length || 0) + 1;
+
+    // Create a unique duplicateId for each duplicate question
     const duplicateId = `${id}-duplicate-${Date.now()}`;  // Unique ID with timestamp
 
-    setDuplicates(prev => {
-      const newDuplicates = {
-        ...prev,
-        [id]: [...(prev[id] || []), { ...questionObj, duplicateId, index: duplicateNumber }]
-      };
-
-      if (data) {
-        // Ensure this state update doesn't happen during render
-        setTimeout(() => {
-          const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
-          updateProgress(updatedProgress);
-        }, 0);
-
-      }
-      return newDuplicates;
-    });
+    setDuplicates((prev) => ({
+      ...prev,
+      [id]: [...(prev[id] || []), { ...questionObj, duplicateId }], // Assign unique duplicateId
+    }));
   };
 
   const handleRemoveQuestion = (sousChapitre, questionId) => {
+    // Remove the original question and its duplicates
+    const relatedDuplicates = duplicates[questionId] || [];
+
     setRemovedQuestions((prev) => ({
       ...prev,
-      [sousChapitre]: [...(prev[sousChapitre] || []), questionId],
+      [sousChapitre]: [
+        ...(prev[sousChapitre] || []),
+        questionId, // Add the original question ID
+        ...relatedDuplicates.map((dup) => dup.duplicateId) // Add all related duplicate IDs
+      ],
     }));
-    updateProgress(calculateProgress(data, formResponses, removedQuestions));
+
+    // Update the progress with the newly removed questions
+    updateProgress(calculateProgress(data, formResponses, {
+      ...removedQuestions,
+      [sousChapitre]: [
+        ...(removedQuestions[sousChapitre] || []),
+        questionId,
+        ...relatedDuplicates.map((dup) => dup.duplicateId),
+      ],
+    }));
   };
 
   const handleRemoveDuplicate = (duplicateId) => {
     setDuplicates((prev) => {
       const updatedDuplicates = {};
 
-      // Iterate over each original question's duplicates
       Object.keys(prev).forEach((questionId) => {
-        // Filter out the duplicate with the given duplicateId
         updatedDuplicates[questionId] = prev[questionId].filter((duplicate) => duplicate.duplicateId !== duplicateId);
-
-        // If no duplicates are left for this question, remove the entry
         if (updatedDuplicates[questionId].length === 0) {
           delete updatedDuplicates[questionId];
         }
       });
-
-      // Update the progress after removing the duplicate
-      if (data) {
-        setTimeout(() => {
-          const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
-          updateProgress(updatedProgress);
-        }, 0);
-      }
 
       return updatedDuplicates;
     });
@@ -272,25 +291,34 @@ function AuditDetail({ updateProgress }) {
 
   const getBackgroundColor = (index) => index % 2 === 0 ? '#e1e1e1' : '#ffffff';
 
-  // const renderQuestionComponent = (item, itemIndex, sousChapitre) => (
-  //   <div
-  //     key={item.duplicateId || item.id} // Unique key for original or duplicate question
-  //     style={{ backgroundColor: getBackgroundColor(itemIndex), marginLeft: 0 }} // Reset margin for alignment
-  //   >
-  //     <QuestionBaseComponent
-  //       questionObj={item}
-  //       formResponses={formResponses}
-  //       handleInputChange={handleInputChange}
-  //       handleCommentChange={handleCommentChange}
-  //       handleImageChange={handleImageChange}
-  //       handleDuplicate={item.duplicateId ? null : handleDuplicate} // Only allow duplicate creation for original questions
-  //       handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)} // Remove based on original/duplicate
-  //       comments={comments}
-  //       images={images}
-  //       isDuplicate={!!item.duplicateId} // Mark whether the item is a duplicate
-  //     />
-  //   </div>
-  // );
+  const renderQuestionComponent = (item, itemIndex, sousChapitre) => {
+    const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
+    if (!isRemoved) {
+      // Use either the original ID or the unique duplicateId
+      const questionKey = item.duplicateId || `original-${item.id}-${itemIndex}`; // Use index for additional uniqueness
+
+      return (
+        <div
+          key={questionKey}  // Ensure a unique key
+          style={{ backgroundColor: getBackgroundColor(itemIndex), marginLeft: 0 }}
+        >
+          <QuestionBaseComponent
+            questionObj={item}
+            formResponses={formResponses}
+            handleInputChange={handleInputChange}
+            handleCommentChange={handleCommentChange}
+            handleImageChange={handleImageChange}
+            isDuplicate={!!item.duplicateId}  // Mark whether the item is a duplicate
+            handleDuplicate={item.duplicateId ? null : handleDuplicate}
+            handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
+            comments={comments}
+            images={images}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div>
@@ -301,7 +329,7 @@ function AuditDetail({ updateProgress }) {
             <h3>{chapitre}</h3>
             {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
               <div key={sousChapitre} className="mb-3" id={sousChapitre}>
-              <h4 className="paragraphe-header">
+                <h4 className="paragraphe-header">
                   <button
                     type="button"
                     className="btn btn-link"
@@ -313,7 +341,7 @@ function AuditDetail({ updateProgress }) {
                 {expandedSousChapitres[sousChapitre] && (
                   <div>
                     {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-                      const uniqueId = `${sousChapitre}-${paragraphe}`; // Unique ID for each paragraphe
+                      const uniqueId = `${sousChapitre}-${paragraphe}`; // Unique ID
 
                       const allQuestionsFlattened = [];
                       sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
@@ -326,27 +354,33 @@ function AuditDetail({ updateProgress }) {
                       });
 
                       return (
-                        <div key={uniqueId} id={uniqueId} className="mb-2"> {/* Ensure unique ID here */}
+                        <div key={uniqueId} id={uniqueId} className="mb-2"> {/* Update the ID here */}
                           <h5>{paragraphe}</h5>
 
-                          {allQuestionsFlattened.map((item, index) => (
-                            <div
-                              key={item.duplicateId || item.id}
-                              style={{ backgroundColor: getBackgroundColor(index), marginLeft: 0 }}
-                            >
-                              <QuestionBaseComponent
-                                questionObj={item}
-                                formResponses={formResponses}
-                                handleInputChange={handleInputChange}
-                                handleCommentChange={handleCommentChange}
-                                handleImageChange={handleImageChange}
-                                isDuplicate={item.isDuplicate}
-                                handleDuplicate={item.isDuplicate ? null : handleDuplicate}
-                                handleRemove={item.isDuplicate ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
-                                comments={comments}
-                                images={images}
-                              />
+                          {(removedQuestions[sousChapitre] || []).length > 0 && (
+                            <div className="mb-2">
+                              <h6>Questions Removed:</h6>
+                              <ul>
+  {allQuestionsFlattened
+    .filter(question => removedQuestions[sousChapitre].includes(question.id || question.duplicateId))
+    .map(question => (
+      <li key={question.duplicateId || `removed-${question.id}`}>
+        {question.question}
+        <button
+          type="button"
+          className="btn btn-success btn-sm ml-2"
+          onClick={() => handleReAddQuestion(sousChapitre, question)}
+        >
+          Re-add
+        </button>
+      </li>
+    ))}
+</ul>
                             </div>
+                          )}
+
+                          {allQuestionsFlattened.map((item, index) => (
+                            renderQuestionComponent(item, index, sousChapitre)
                           ))}
                         </div>
                       );
