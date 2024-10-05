@@ -85,14 +85,14 @@ function AuditDetail({ updateProgress }) {
     const fetchData = async () => {
       try {
         const response = await axios.get('/api/audit_detail');
-        setData(response.data); // This should trigger the progress calculation in another useEffect
-
+        setData(response.data);
         const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
+        const storedAuditId = localStorage.getItem("auditId");
+
         if (storedResponses) {
           setFormResponses(storedResponses);
         }
 
-        const storedAuditId = localStorage.getItem("auditId");
         if (storedAuditId) {
           setAuditId(storedAuditId);
         } else {
@@ -100,6 +100,8 @@ function AuditDetail({ updateProgress }) {
           setAuditId(newAuditId);
           localStorage.setItem("auditId", newAuditId);
         }
+
+        updateProgress(calculateProgress(response.data, storedResponses, removedQuestions));
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -111,30 +113,13 @@ function AuditDetail({ updateProgress }) {
   // Sticky Header Effect for h4 elements
   useEffect(() => {
     const handleScroll = () => {
-      const h3Headers = document.querySelectorAll('h3');
-      const h4Headers = document.querySelectorAll('h4');
-
-      // Sticky behavior for h3 elements
-      h3Headers.forEach((header, index) => {
-        const nextHeader = h3Headers[index + 1]; // Get the next h3 element
+      const headers = document.querySelectorAll('h4');
+      headers.forEach((header, index) => {
+        const nextHeader = headers[index + 1]; // Get the next h4 element
         const headerRect = header.getBoundingClientRect();
         const nextHeaderRect = nextHeader?.getBoundingClientRect();
 
-        // When the next h3 is about to overlap the current sticky h3
-        if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
-          header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
-        } else {
-          header.style.transform = 'translateY(0)'; // Reset transformation
-        }
-      });
-
-      // Sticky behavior for h3 and h4 elements
-      h4Headers.forEach((header, index) => {
-        const nextHeader = h4Headers[index + 1]; // Get the next h4 element
-        const headerRect = header.getBoundingClientRect();
-        const nextHeaderRect = nextHeader?.getBoundingClientRect();
-
-        // When the next h4 is about to overlap the current sticky h4
+        // When the next header is about to overlap the current sticky header
         if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
           header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
         } else {
@@ -152,22 +137,14 @@ function AuditDetail({ updateProgress }) {
 
   const handleInputChange = (event, questionId) => {
     const { value } = event.target;
-    setFormResponses(prevResponses => {
-      const updatedResponses = {
-        ...prevResponses,
-        [questionId]: { ...prevResponses[questionId], response: value },
-      };
-      localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
-      return updatedResponses;
-    });
+    const updatedResponses = {
+      ...formResponses,
+      [questionId]: { ...formResponses[questionId], response: value },
+    };
+    setFormResponses(updatedResponses);
+    localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+    updateProgress(calculateProgress(data, updatedResponses, removedQuestions));
   };
-
-  // Progress update after form responses are updated
-  useEffect(() => {
-    if (data) {
-      updateProgress(calculateProgress(data, formResponses, removedQuestions));
-    }
-  }, [formResponses, data, removedQuestions, calculateProgress, updateProgress]);
 
   const handleCommentChange = (event, questionId) => {
     const { value } = event.target;
@@ -195,18 +172,23 @@ function AuditDetail({ updateProgress }) {
 
   const handleDuplicate = (questionObj) => {
     const { id } = questionObj;
-    // Get the number of existing duplicates and add 1 to give the new duplicate its number
     const duplicateNumber = (duplicates[id]?.length || 0) + 1;
     const duplicateId = `${id}-duplicate-${Date.now()}`;  // Unique ID with timestamp
 
     setDuplicates(prev => {
       const newDuplicates = {
         ...prev,
-        [id]: [...(prev[id] || []), { ...questionObj, duplicateId, index: duplicateNumber }], // Add index for numbering
+        [id]: [...(prev[id] || []), { ...questionObj, duplicateId, index: duplicateNumber }]
       };
 
-      const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
-      updateProgress(updatedProgress);
+      if (data) {
+        // Ensure this state update doesn't happen during render
+        setTimeout(() => {
+          const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
+          updateProgress(updatedProgress);
+        }, 0);
+
+      }
       return newDuplicates;
     });
   };
@@ -223,14 +205,25 @@ function AuditDetail({ updateProgress }) {
     setDuplicates((prev) => {
       const updatedDuplicates = {};
 
+      // Iterate over each original question's duplicates
       Object.keys(prev).forEach((questionId) => {
+        // Filter out the duplicate with the given duplicateId
         updatedDuplicates[questionId] = prev[questionId].filter((duplicate) => duplicate.duplicateId !== duplicateId);
+
+        // If no duplicates are left for this question, remove the entry
         if (updatedDuplicates[questionId].length === 0) {
           delete updatedDuplicates[questionId];
         }
       });
 
-      updateProgress(calculateProgress(data, formResponses, removedQuestions));
+      // Update the progress after removing the duplicate
+      if (data) {
+        setTimeout(() => {
+          const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
+          updateProgress(updatedProgress);
+        }, 0);
+      }
+
       return updatedDuplicates;
     });
   };
@@ -279,122 +272,26 @@ function AuditDetail({ updateProgress }) {
 
   const getBackgroundColor = (index) => index % 2 === 0 ? '#e1e1e1' : '#ffffff';
 
-  const renderQuestionComponent = (item, itemIndex, sousChapitre) => (
-    <div
-      key={item.duplicateId || item.id} // Unique key for original or duplicate question
-      style={{ backgroundColor: getBackgroundColor(itemIndex), marginLeft: 0 }} // Reset margin for alignment
-    >
-      <QuestionBaseComponent
-        questionObj={item}
-        formResponses={formResponses}
-        handleInputChange={handleInputChange}
-        handleCommentChange={handleCommentChange}
-        handleImageChange={handleImageChange}
-        handleDuplicate={item.duplicateId ? null : handleDuplicate} // Only allow duplicate creation for original questions
-        handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)} // Remove based on original/duplicate
-        comments={comments}
-        images={images}
-        isDuplicate={!!item.duplicateId} // Mark whether the item is a duplicate
-      />
-    </div>
-  );
-
-  // return (
-  //   <div>
-  //     <h2>Grilles de l'audit</h2>
-  //     <form onSubmit={handleSubmit}>
-  //       {data && Object.entries(data).map(([chapitre, sousChapitres]) => (
-  //         <div key={chapitre}>
-  //           <h3>{chapitre}</h3>
-  //           {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
-  //             <div key={sousChapitre} className="mb-3" id={sousChapitre}>
-  //             <h4 className="paragraphe-header">
-  //             <button
-  //                   type="button"
-  //                   className="btn btn-link"
-  //                   onClick={() => toggleSousChapitre(sousChapitre)}
-  //                 >
-  //                   {expandedSousChapitres[sousChapitre] ? '▼' : '▶'} {sousChapitre}
-  //                 </button>
-  //               </h4>
-  //               {expandedSousChapitres[sousChapitre] && (
-  //                 <div>
-  //                   {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-  //                     const allQuestionsFlattened = [];
-
-  //                     sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
-  //                       questions.forEach((questionObj) => {
-  //                         allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
-  //                         (duplicates[questionObj.id] || []).forEach((duplicate) => {
-  //                           allQuestionsFlattened.push({ ...duplicate, isDuplicate: true });
-  //                         });
-  //                       });
-  //                     });
-
-  //                     return (
-  //                       <div key={paragraphe} id={paragraphe} className="mb-2">
-  //                         <h5>{paragraphe}</h5>
-
-  //                         {(removedQuestions[sousChapitre] || []).length > 0 && (
-  //                           <div className="mb-2">
-  //                             <h6>Questions Removed:</h6>
-  //                             <ul>
-  //                               {allQuestionsFlattened
-  //                                 .filter(question => removedQuestions[sousChapitre].includes(question.id))
-  //                                 .map(question => (
-  //                                   <li key={question.id}>
-  //                                     {question.question}
-  //                                     <button
-  //                                       type="button"
-  //                                       className="btn btn-success btn-sm ml-2"
-  //                                       onClick={() => handleReAddQuestion(sousChapitre, question)}
-  //                                     >
-  //                                       Re-add
-  //                                     </button>
-  //                                   </li>
-  //                                 ))}
-  //                             </ul>
-  //                           </div>
-  //                         )}
-
-  //                         {allQuestionsFlattened.map((item, index) => {
-  //                           const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
-  //                           if (!isRemoved) {
-  //                             return (
-  //                               <div
-  //                                 key={item.duplicateId || item.id}
-  //                                 style={{ backgroundColor: getBackgroundColor(index), marginLeft: 0 }}
-  //                               >
-  //                                 <QuestionBaseComponent
-  //                                   questionObj={item}
-  //                                   formResponses={formResponses}
-  //                                   handleInputChange={handleInputChange}
-  //                                   handleCommentChange={handleCommentChange}
-  //                                   handleImageChange={handleImageChange}
-  //                                   isDuplicate={item.isDuplicate}
-  //                                   handleDuplicate={item.isDuplicate ? null : handleDuplicate}
-  //                                   handleRemove={item.isDuplicate ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
-  //                                   comments={comments}
-  //                                   images={images}
-  //                                 />
-  //                               </div>
-  //                             );
-  //                           }
-  //                           return null;
-  //                         })}
-  //                       </div>
-  //                     );
-  //                   })}
-  //                 </div>
-  //               )}
-  //             </div>
-  //           ))}
-  //         </div>
-  //       ))}
-  //       <button type="submit" className="btn btn-primary">Envoyer</button>
-  //     </form>
+  // const renderQuestionComponent = (item, itemIndex, sousChapitre) => (
+  //   <div
+  //     key={item.duplicateId || item.id} // Unique key for original or duplicate question
+  //     style={{ backgroundColor: getBackgroundColor(itemIndex), marginLeft: 0 }} // Reset margin for alignment
+  //   >
+  //     <QuestionBaseComponent
+  //       questionObj={item}
+  //       formResponses={formResponses}
+  //       handleInputChange={handleInputChange}
+  //       handleCommentChange={handleCommentChange}
+  //       handleImageChange={handleImageChange}
+  //       handleDuplicate={item.duplicateId ? null : handleDuplicate} // Only allow duplicate creation for original questions
+  //       handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)} // Remove based on original/duplicate
+  //       comments={comments}
+  //       images={images}
+  //       isDuplicate={!!item.duplicateId} // Mark whether the item is a duplicate
+  //     />
   //   </div>
   // );
+
   return (
     <div>
       <h2>Grilles de l'audit</h2>
@@ -404,7 +301,7 @@ function AuditDetail({ updateProgress }) {
             <h3>{chapitre}</h3>
             {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
               <div key={sousChapitre} className="mb-3" id={sousChapitre}>
-                <h4 className="paragraphe-header">
+              <h4 className="paragraphe-header">
                   <button
                     type="button"
                     className="btn btn-link"
@@ -416,9 +313,8 @@ function AuditDetail({ updateProgress }) {
                 {expandedSousChapitres[sousChapitre] && (
                   <div>
                     {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-                      const uniqueId = `${sousChapitre}-${paragraphe}`; // Unique ID
-
                       const allQuestionsFlattened = [];
+
                       sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
                         questions.forEach((questionObj) => {
                           allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
@@ -429,7 +325,7 @@ function AuditDetail({ updateProgress }) {
                       });
 
                       return (
-                        <div key={uniqueId} id={uniqueId} className="mb-2"> {/* Update the ID here */}
+                        <div key={paragraphe} id={paragraphe} className="mb-2">
                           <h5>{paragraphe}</h5>
 
                           {(removedQuestions[sousChapitre] || []).length > 0 && (
