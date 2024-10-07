@@ -185,14 +185,6 @@ def load_detail_data():
 
     return hierarchical_data
 
-# Serve React App
-# @app.route('/', defaults={'path': ''})
-# @app.route('/<path:path>')
-# def serve_react_app(path):
-#     if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-#         return send_from_directory(app.static_folder, path)
-#     else:
-#         return send_from_directory(app.static_folder, 'index.html')
 
 # Serve React App
 @app.route('/', defaults={'path': ''})
@@ -433,6 +425,8 @@ def oauth_callback():
 
 @app.route('/api/chart/cpcnc/<int:c_count>/<int:pc_count>/<int:nc_count>', methods=['GET'])
 def get_cpcnc_chart(c_count, pc_count, nc_count):
+    logging.debug(f"C/PC/NC counts received: C={c_count}, PC={pc_count}, NC={nc_count}")
+
     # Pie chart, where the slices will be ordered and plotted counter-clockwise:
     labels = 'C', 'PC', 'NC'
     sizes = [c_count, pc_count, nc_count]

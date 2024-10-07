@@ -132,8 +132,27 @@ h4 {
   padding: 5px 0;
   border-bottom: 1px solid #ccc;
 }
-/*# sourceMappingURL=styles.css.map */
 
 root {
   width: 100vw !important;
 }
+
+
+.custom-navbar .navbar-nav {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping */
+  gap: 10px; /* Space between the items */
+}
+
+.custom-navbar .nav-item {
+  margin-bottom: 5px; /* Space between items when wrapping to new line */
+}
+
+/* Optional: Adjust navbar spacing or layout at specific widths if needed */
+@media (max-width: 600px) {
+  .custom-navbar .nav-item {
+    flex-basis: 100%; /* Make each item full-width on very small screens if needed */
+  }
+}
+
+/*# sourceMappingURL=styles.css.map */
