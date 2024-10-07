@@ -73,7 +73,9 @@ function QuestionBaseComponent({
 
       {/* Comment Input Field */}
       <div className="flex-item comment-field" style={{ flexBasis: '20%', flexShrink: 0 }}>
+        <label htmlFor={`comment-${questionId}`}>Comment</label> {/* Label with htmlFor attribute */}
         <textarea
+          id={`comment-${questionId}`}  // Unique ID for the textarea
           className="form-control"
           value={comments[questionId] || ''}
           onChange={(event) => handleCommentChange(event, questionId)}  // Use unique questionId

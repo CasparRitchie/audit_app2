@@ -41,6 +41,8 @@ function Home() {
         <button onClick={handleCreateAudit}>Creer Audit</button>
         <button onClick={() => navigate('/view')}>Voir Audits</button>
         <button onClick={() => navigate('/edit')}>Editer Audit (en construction)</button>
+        <button onClick={() => navigate('/analyse')}>Analyse Audits</button>
+
       </div>
     </div>
   );
