@@ -1,22 +1,17 @@
-/* .response-btn {
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-weight: bold;
-  display: inline-block;
-  margin-left: 10px;
+/* Analyse.css */
+.chart-image {
+  width: 20%;
+  height: auto;
 }
 
-.btn-success {
-  background-color: #28a745;
-  color: white;
+@media (max-width: 768px) {
+  .chart-image {
+    width: 50%; /* Increase size for smaller screens */
+  }
 }
 
-.btn-warning {
-  background-color: #ffc107;
-  color: black;
+@media (max-width: 480px) {
+  .chart-image {
+    width: 70%; /* Further increase for very small screens */
+  }
 }
-
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
-} */

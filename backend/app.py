@@ -435,7 +435,7 @@ def get_cpcnc_chart(c_count, pc_count, nc_count):
 
     plt.figure(figsize=(6, 6))
     plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%',
-            shadow=True, startangle=140)
+            shadow=True, startangle=140, textprops={'fontsize': 30})
     plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 
     # Save chart to a BytesIO buffer
@@ -455,7 +455,7 @@ def get_okko_chart(ok_count, ko_count):
     colors = ['#28a745', '#dc3545']
 
     plt.figure(figsize=(6, 6))
-    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
     plt.axis('equal')
 
     img = io.BytesIO()
@@ -467,14 +467,28 @@ def get_okko_chart(ok_count, ko_count):
 
 
 @app.route('/api/chart/temperature/<int:over63>/<int:under63>', methods=['GET'])
+# def get_temperature_chart(over63, under63):
+#     # Pie chart for temperature
+#     labels = '>= 63°C', '< 63°C'
+#     sizes = [over63, under63]
+#     colors = ['#28a745', '#dc3545']
+
+#     plt.figure(figsize=(6, 6))
+#     plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
+#     plt.axis('equal')
+
+#     img = io.BytesIO()
+#     plt.savefig(img, format='png')
+#     img.seek(0)
+#     plt.close()
+
+#     return send_file(img, mimetype='image/png')
 def get_temperature_chart(over63, under63):
-    # Pie chart for temperature
-    labels = '>= 63°C', '< 63°C'
     sizes = [over63, under63]
     colors = ['#28a745', '#dc3545']
 
     plt.figure(figsize=(6, 6))
-    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+    plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
     plt.axis('equal')
 
     img = io.BytesIO()
