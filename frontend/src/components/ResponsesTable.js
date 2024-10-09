@@ -1,6 +1,7 @@
 import React from 'react';
 
 function ResponsesTable({ sousParagraphe, responseCounts }) {
+  console.log('Response counts for:', sousParagraphe, responseCounts);
   return (
     <div>
       <h6>Response Summary for {sousParagraphe}</h6>

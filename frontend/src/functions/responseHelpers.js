@@ -1,12 +1,18 @@
 
 // Function to find the corresponding response for a question ID
 export const findResponseForQuestion = (filteredAudits, questionId) => {
-  if (!filteredAudits || filteredAudits.length === 0) {
-    return 'No response';
-  }
+  console.log("Searching for Question ID:", questionId);
+  // console.log("filteredAudits:", filteredAudits);
 
   const responseObj = filteredAudits.find((audit) => audit.question === String(questionId));
-  return responseObj && responseObj.response ? responseObj.response.response : 'No response';
+
+  if (responseObj && responseObj.response) {
+    console.log("Found response:", responseObj.response.response);
+    return responseObj.response.response;
+  } else {
+    console.log("No response found for Question ID:", questionId);
+    return 'No response';
+  }
 };
 
 // Function to style the responses with button-like backgrounds

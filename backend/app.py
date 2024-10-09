@@ -453,9 +453,10 @@ def get_okko_chart(ok_count, ko_count):
     labels = 'OK', 'KO'
     sizes = [ok_count, ko_count]
     colors = ['#28a745', '#dc3545']
+    explode = (0.1, 0)  # only "explode" the OK slice (slightly pull out)
 
     plt.figure(figsize=(6, 6))
-    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
+    plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
     plt.axis('equal')
 
     img = io.BytesIO()
@@ -470,9 +471,10 @@ def get_okko_chart(ok_count, ko_count):
 def get_temperature_chart(over63, under63):
     sizes = [over63, under63]
     colors = ['#28a745', '#dc3545']
+    explode = (0.1, 0)  # only "explode" the OK slice (slightly pull out)
 
     plt.figure(figsize=(6, 6))
-    plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
+    plt.pie(sizes, explode=explode, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
     plt.axis('equal')
 
     img = io.BytesIO()

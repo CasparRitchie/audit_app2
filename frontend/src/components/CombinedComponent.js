@@ -187,17 +187,55 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits }) => {
     }
   };
 
+  // const calculateAndFetchCharts = (sectionQuestions, sousParagrapheKey) => {
+  //   const responseCounts = { C: 0, PC: 0, NC: 0, OK: 0, KO: 0, over63: 0, under63: 0 };
+
+  //   if (Array.isArray(sectionQuestions)) {
+  //     sectionQuestions.forEach((questionObj) => {
+  //       const response = findResponseForQuestion(filteredAudits, questionObj.id);
+  //       if (response === "C") responseCounts.C++;
+  //       if (response === "PC") responseCounts.PC++;
+  //       if (response === "NC") responseCounts.NC++;
+  //       if (response === "OK") responseCounts.OK++;
+  //       if (response === "KO") responseCounts.KO++;
+  //       const temperature = parseFloat(response);
+  //       if (!isNaN(temperature)) {
+  //         if (temperature >= 63) {
+  //           responseCounts.over63++;
+  //         } else {
+  //           responseCounts.under63++;
+  //         }
+  //       }
+  //     });
+  //   }
+
+  //   // Only fetch if counts are not all zero to avoid `0/0/0` errors
+  //   if (responseCounts.C > 0 || responseCounts.PC > 0 || responseCounts.NC > 0) {
+  //     fetchChart(responseCounts, sousParagrapheKey, "CPCNC");
+  //   }
+
+  //   if (responseCounts.OK > 0 || responseCounts.KO > 0) {
+  //     fetchChart(responseCounts, sousParagrapheKey, "OKKO");
+  //   }
+
+  //   if (responseCounts.over63 > 0 || responseCounts.under63 > 0) {
+  //     fetchChart(responseCounts, sousParagrapheKey, "Temperature");
+  //   }
+  // };
   const calculateAndFetchCharts = (sectionQuestions, sousParagrapheKey) => {
     const responseCounts = { C: 0, PC: 0, NC: 0, OK: 0, KO: 0, over63: 0, under63: 0 };
 
     if (Array.isArray(sectionQuestions)) {
       sectionQuestions.forEach((questionObj) => {
         const response = findResponseForQuestion(filteredAudits, questionObj.id);
+        console.log(`Question ID: ${questionObj.id}, Response: ${response}`); // Log each question and response
+
         if (response === "C") responseCounts.C++;
         if (response === "PC") responseCounts.PC++;
         if (response === "NC") responseCounts.NC++;
         if (response === "OK") responseCounts.OK++;
         if (response === "KO") responseCounts.KO++;
+
         const temperature = parseFloat(response);
         if (!isNaN(temperature)) {
           if (temperature >= 63) {
@@ -209,15 +247,15 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits }) => {
       });
     }
 
-    // Only fetch if counts are not all zero to avoid `0/0/0` errors
+    console.log(`Final response counts for ${sousParagrapheKey}:`, responseCounts); // Log final counts for each section
+
+    // Fetch charts based on the counts
     if (responseCounts.C > 0 || responseCounts.PC > 0 || responseCounts.NC > 0) {
       fetchChart(responseCounts, sousParagrapheKey, "CPCNC");
     }
-
     if (responseCounts.OK > 0 || responseCounts.KO > 0) {
       fetchChart(responseCounts, sousParagrapheKey, "OKKO");
     }
-
     if (responseCounts.over63 > 0 || responseCounts.under63 > 0) {
       fetchChart(responseCounts, sousParagrapheKey, "Temperature");
     }
@@ -230,7 +268,7 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits }) => {
         Object.keys(auditDetail[chapitre][sousChapitre]).forEach((paragraphe) => {
           Object.keys(auditDetail[chapitre][sousChapitre][paragraphe]).forEach((sousParagraphe) => {
             const sectionQuestions = auditDetail[chapitre][sousChapitre][paragraphe][sousParagraphe];
-            const sousParagrapheKey = `${paragraphe}-${sousParagraphe}`; // Unique key for each section
+            const sousParagrapheKey = `${sousChapitre}-${paragraphe}-${sousParagraphe}`; // Create unique key
 
             calculateAndFetchCharts(sectionQuestions, sousParagrapheKey); // Calculate counts and fetch charts
           });
@@ -251,7 +289,7 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits }) => {
               {Object.keys(auditDetail[chapitre][sousChapitre][paragraphe]).map(
                 (sousParagraphe, sousParagrapheIndex) => {
                   const sectionQuestions = auditDetail[chapitre][sousChapitre][paragraphe][sousParagraphe];
-                  const sousParagrapheKey = `${paragraphe}-${sousParagraphe}`; // Create unique key
+                  const sousParagrapheKey = `${sousChapitre}-${paragraphe}-${sousParagraphe}`; // Create unique key
 
                   return (
                     <div key={sousParagrapheIndex}>
@@ -280,7 +318,7 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits }) => {
                       {/* Display the chart */}
                       {charts[`${sousParagrapheKey}-CPCNC`] ? (
                         <div>
-                          <h6>CPCNC Chart for {paragraphe}-{sousParagraphe}</h6>
+                          <h6>CPCNC Chart for {sousChapitre}-{paragraphe}-{sousParagraphe}</h6>
                           <img
                             src={charts[`${sousParagrapheKey}-CPCNC`]}
                             alt={`CPCNC Chart for ${paragraphe}-${sousParagraphe}`}
