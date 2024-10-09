@@ -8,7 +8,7 @@ function ViewAudits() {
   useEffect(() => {
     axios.get('/api/get_audits')
       .then(response => {
-        console.log('Audit data:', response.data); // Log the raw data for debugging
+        // console.log('Audit data:', response.data); // Log the raw data for debugging
         setAudits(groupByAuditId(response.data)); // Store the grouped data in state
       })
       .catch(error => {

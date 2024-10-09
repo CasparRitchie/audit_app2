@@ -14,7 +14,7 @@ export const createChart = async (responseCounts, sousParagrapheKey, chartType, 
   }
 
   if (!url) {
-    console.log(`Skipping chart generation for ${chartType}: no valid responses.`);
+    // console.log(`Skipping chart generation for ${chartType}: no valid responses.`);
     return;
   }
 
