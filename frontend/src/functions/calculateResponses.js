@@ -36,3 +36,11 @@ export const calculateTemperature = (questions) => {
   });
   return counts;
 };
+// New function to combine all calculations
+export const calculateResponseCounts = (questions) => {
+  return {
+    ...calculateCPCNC(questions),
+    ...calculateOKKO(questions),
+    ...calculateTemperature(questions),
+  };
+};
