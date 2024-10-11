@@ -7,6 +7,7 @@ function AuditDetail({ updateProgress }) {
   const [formResponses, setFormResponses] = useState({});
   const [comments, setComments] = useState({});
   const [images, setImages] = useState({});
+  const [imagePreviews, setImagePreviews] = useState({}); // Store image preview URLs
   const [duplicates, setDuplicates] = useState({});
   const [removedQuestions, setRemovedQuestions] = useState({});
   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
@@ -119,7 +120,6 @@ function AuditDetail({ updateProgress }) {
     fetchData();
   }, [calculateProgress, updateProgress, removedQuestions]);
 
-  // Sticky Header Effect for h4 elements
   // Sticky Header Effect for h3, h4, and h5 elements
 useEffect(() => {
   const handleScroll = () => {
@@ -200,15 +200,47 @@ useEffect(() => {
     }));
   };
 
+  // const handleImageChange = (event, questionId) => {
+  //   const file = event.target.files[0];
+  //   setImages(prev => ({
+  //     ...prev,
+  //     [questionId]: file,
+  //   }));
+  //   localStorage.setItem("auditResponses", JSON.stringify({
+  //     ...formResponses,
+  //     [`image_${questionId}`]: { imageName: file.name }
+  //   }));
+  // };
+  // const handleImageChange = (event, questionId) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     // Create a preview URL for the image
+  //     const previewUrl = URL.createObjectURL(file);
+  //     setImages((prev) => ({
+  //       ...prev,
+  //       [questionId]: file,
+  //     }));
+  //     setImagePreviews((prev) => ({
+  //       ...prev,
+  //       [questionId]: previewUrl, // Store preview URL
+  //     }));
+  //     localStorage.setItem("auditResponses", JSON.stringify({
+  //       ...formResponses,
+  //       [`image_${questionId}`]: { imageName: file.name }
+  //     }));
+  //   }
+  // };
   const handleImageChange = (event, questionId) => {
-    const file = event.target.files[0];
+    const files = Array.from(event.target.files); // Get all selected files
+
     setImages(prev => ({
       ...prev,
-      [questionId]: file,
+      [questionId]: [...(prev[questionId] || []), ...files], // Store multiple images for the question
     }));
+
     localStorage.setItem("auditResponses", JSON.stringify({
       ...formResponses,
-      [`image_${questionId}`]: { imageName: file.name }
+      [`images_${questionId}`]: [...(formResponses[`images_${questionId}`] || []), ...files.map(file => file.name)]
     }));
   };
 
@@ -310,12 +342,11 @@ useEffect(() => {
   const renderQuestionComponent = (item, itemIndex, sousChapitre) => {
     const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
     if (!isRemoved) {
-      // Use either the original ID or the unique duplicateId
       const questionKey = item.duplicateId || `original-${item.id}-${itemIndex}`; // Use index for additional uniqueness
 
       return (
         <div
-          key={questionKey}  // Ensure a unique key
+          key={questionKey}
           style={{ backgroundColor: getBackgroundColor(itemIndex), marginLeft: 0 }}
         >
           <QuestionBaseComponent
@@ -330,6 +361,16 @@ useEffect(() => {
             comments={comments}
             images={images}
           />
+          {/* Render image preview if available */}
+          {imagePreviews[item.id] && (
+            <div style={{ marginTop: '10px' }}>
+              <img
+                src={imagePreviews[item.id]}
+                alt="Preview"
+                style={{ width: '100px', height: 'auto', border: '1px solid #ccc' }}
+              />
+            </div>
+          )}
         </div>
       );
     }
