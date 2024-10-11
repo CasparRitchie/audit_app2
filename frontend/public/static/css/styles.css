@@ -165,3 +165,8 @@ root {
   margin-left: 270px; /* Adds margin to the main content to make room for the sidebar */
   padding: 20px;
 }
+
+
+.sidebar ul li:first-child {
+  margin-top: 15px; /* Adjust this value as needed */
+}
