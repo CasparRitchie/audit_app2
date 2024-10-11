@@ -150,3 +150,18 @@ root {
     flex-basis: 100%; /* Make each item full-width on very small screens */
   }
 }
+
+.sidebar {
+  position: fixed; /* Fixes sidebar to the viewport */
+  top: 20px;
+  height: calc(100vh - 20px); /* Adjusts the height to fit within the viewport */
+  overflow-y: auto; /* Enables vertical scrolling for the sidebar */
+  padding: 10px;
+  width: 250px; /* Adjust the width to fit your layout */
+  background-color: #f8f9fa;
+}
+
+.main-content {
+  margin-left: 270px; /* Adds margin to the main content to make room for the sidebar */
+  padding: 20px;
+}

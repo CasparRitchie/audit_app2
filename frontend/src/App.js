@@ -5,39 +5,22 @@ import AuditHeader from './AuditHeader';
 import AuditDetail from './AuditDetail';
 import ViewAudits from './ViewAudits';
 import EditAudit from './EditAudit';
-import Sidebar from './Sidebar';
 import Analyse from './Analyse';
+import Sidebar from './Sidebar';  // Assuming Sidebar is imported for potential use.
 
 function App() {
-  const [progressData, setProgressData] = useState({}); // Track progress data for sidebar
-  const [isSidebarOpen, setSidebarOpen] = useState(false); // State to handle sidebar visibility
+  const [progressData, setProgressData] = useState({});
 
-  // Memoize updateProgress using useCallback
+  // Memoized function to update progress
   const updateProgress = useCallback((progress) => {
-    setProgressData(progress); // Update progress state with new values
-  }, []); // The empty array ensures this function is only created once
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen); // Toggle sidebar visibility
-  };
+    setProgressData(progress);
+  }, []);
 
   return (
     <Router>
       <div className="container-fluid mt-4">
-        <button className="sidebar-toggle btn btn-primary mb-2" onClick={toggleSidebar}>
-          {isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}
-        </button>
-
         <div className="row">
-          {/* Sidebar Section */}
-          {isSidebarOpen && (
-            <div className="col-md-3">
-              <Sidebar data={progressData} />
-            </div>
-          )}
-
-          {/* Main Content Section */}
-          <div className={isSidebarOpen ? "col-md-9" : "col-md-12"}>
+          <div className="col-md-12">
             <nav className="navbar navbar-expand-lg navbar-light bg-light mb-4">
               <Link className="navbar-brand" to="/">Audit App</Link>
               <div className="navbar-nav">
@@ -50,7 +33,15 @@ function App() {
 
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/create" element={<><AuditHeader /><AuditDetail updateProgress={updateProgress} /></>} />
+              <Route
+                path="/create"
+                element={
+                  <>
+                    <AuditHeader />
+                    <AuditDetail updateProgress={updateProgress} />
+                  </>
+                }
+              />
               <Route path="/view" element={<ViewAudits />} />
               <Route path="/edit" element={<EditAudit />} />
               <Route path="/analyse" element={<Analyse />} />
