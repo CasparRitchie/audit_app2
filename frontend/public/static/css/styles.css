@@ -21,19 +21,19 @@ h4 {
   font-size: calc(1.925rem + .9vw) !important;
   position: -webkit-sticky;
   position: sticky;
-  top: 50px !important; /* Sticks just below h3 */
+  top: 60px !important; /* Sticks just below h3 */
   z-index: 15; /* Lower than h3, but higher than h5 */
   padding: 5px 0;
   border-bottom: 1px solid #ccc;
 }
 
 h5 {
-  color: #D30E7F !important;
+  color: #000000 !important;
   background-color: #fff;
   font-size: calc(1.725rem + .9vw) !important;
   position: -webkit-sticky;
   position: sticky;
-  top: 100px !important; /* Sticks below h4 */
+  top: 130px !important; /* Sticks below h4 */
   z-index: 10; /* Lower than h4 */
   padding: 5px 0;
   border-bottom: 1px solid #ccc;
@@ -53,7 +53,10 @@ h3.sidebar-h3 {
 }
 
 .btn.btn-link {
-  color: #353939;
+  color: #D30E7F;
+  font-size: calc(1.725rem + .9vw) !important;
+
+
 }
 
 div.progress-bar {
