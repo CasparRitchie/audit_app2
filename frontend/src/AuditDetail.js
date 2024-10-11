@@ -358,8 +358,9 @@ useEffect(() => {
             isDuplicate={!!item.duplicateId}  // Mark whether the item is a duplicate
             handleDuplicate={item.duplicateId ? null : handleDuplicate}
             handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
-            comments={comments}
+            setImages={setImages}
             images={images}
+            comments={comments}
           />
           {/* Render image preview if available */}
           {imagePreviews[item.id] && (
