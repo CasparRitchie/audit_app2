@@ -849,15 +849,27 @@ function AuditDetail({ updateProgress }) {
 
   const handleCommentChange = (event, questionId) => {
     const { value } = event.target;
+
+    // Update the comments state (if needed for UI purposes)
     setComments(prev => ({
       ...prev,
       [questionId]: value,
     }));
-    localStorage.setItem("auditResponses", JSON.stringify({
+
+    // Update the formResponses to include the comment as part of the response object
+    const updatedResponses = {
       ...formResponses,
-      [questionId]: { ...formResponses[questionId], comment: value },
-    }));
-  };
+      [questionId]: {
+        ...formResponses[questionId],
+        comment: value,  // Ensure the comment is part of the response object
+        response: formResponses[questionId]?.response || ''  // Preserve existing response if present
+      }
+    };
+
+    // Save the updated formResponses to state and localStorage
+    setFormResponses(updatedResponses);
+    localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+};
 
   const handleImageChange = (event, questionId) => {
     const files = Array.from(event.target.files); // Get all selected files
@@ -867,9 +879,13 @@ function AuditDetail({ updateProgress }) {
       [questionId]: [...(prev[questionId] || []), ...files], // Store multiple images for the question
     }));
 
+    // Update the local storage to store image names
     localStorage.setItem("auditResponses", JSON.stringify({
       ...formResponses,
-      [`images_${questionId}`]: [...(formResponses[`images_${questionId}`] || []), ...files.map(file => file.name)]
+      [questionId]: {
+        ...formResponses[questionId],
+        images: [...(formResponses[questionId]?.images || []), ...files.map(file => file.name)]
+      }
     }));
   };
 
@@ -937,27 +953,38 @@ function AuditDetail({ updateProgress }) {
     const formData = new FormData();
     formData.append('auditId', auditId);
 
-    Object.entries(formResponses).forEach(([questionId, response]) => {
-      const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
-      formData.append(`responses[${questionId}]`, finalResponse);
+    // Loop through formResponses to add responses and comments to the FormData
+    Object.entries(formResponses).forEach(([questionId, responseObj]) => {
+        // Store the response in the 'response' column
+        if (responseObj?.response) {
+            const finalResponse = typeof responseObj.response === 'object' ? JSON.stringify(responseObj.response) : responseObj.response;
+            formData.append(`responses[${questionId}]`, finalResponse);
+        }
+
+        // Store the comment in the 'comment' column
+        if (responseObj?.comment) {
+            formData.append(`comments[${questionId}]`, responseObj.comment);
+        }
     });
 
-    Object.entries(images).forEach(([questionId, image]) => {
-      if (image) {
-        formData.append(`images[${questionId}]`, image);
-      }
+    // Loop through images and add them to the formData
+    Object.entries(images).forEach(([questionId, imageList]) => {
+        imageList.forEach((image) => {
+            formData.append(`images[${questionId}][]`, image); // Using array syntax [] to store multiple images
+        });
     });
 
+    // Submit the form
     axios.post('/api/submit', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data' },
     })
     .then(() => {
-      alert('Audit detail submitted successfully!');
-      localStorage.removeItem("auditResponses");
-      localStorage.removeItem("auditId");
+        alert('Audit detail submitted successfully!');
+        localStorage.removeItem("auditResponses");
+        localStorage.removeItem("auditId");
     })
     .catch(error => console.error('Error submitting audit detail:', error));
-  };
+};
 
   const toggleSousChapitre = (sousChapitre) => {
     setExpandedSousChapitres(prevState => ({
