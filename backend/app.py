@@ -269,157 +269,6 @@ def submit_responses():
         logging.error(f"Error in submit_responses: {e}")
         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
 
-# @app.route('/api/submit', methods=['POST'])
-# def submit_responses():
-#     try:
-#         data = request.form  # Form data
-#         files = request.files  # Uploaded files
-
-#         audit_id = data.get('auditId')  # Retrieve the audit ID
-#         new_data = []
-#         audit_header_responses = []
-
-#         # Process audit header responses
-#         for key, value in data.items():
-#             if key.startswith("header"):
-#                 q_key = key.split("[")[1][:-1]
-#                 audit_header_responses.append({
-#                     "auditId": audit_id,
-#                     "question": q_key,
-#                     "response": value
-#                 })
-
-#         # Process form responses
-#         for question, response in data.items():
-#             if question.startswith("responses"):
-#                 q_key = question.split("[")[1][:-1]
-#                 response_value = response
-#                 comment = data.get(f'comments[{q_key}]', '')
-#                 image_files = files.getlist(f'images[{q_key}]')  # Expect multiple images for each question
-
-#                 # Handle image file saving to Dropbox
-#                 image_paths = []  # List to hold all image paths for the question
-
-#                 if image_files:
-#                     for image in image_files:
-#                         if image:
-#                             image_filename = secure_filename(image.filename)
-#                             image_path = f"{UPLOAD_FOLDER}/images/{image_filename}"  # Store images in /uploads/images/
-#                             dbx = get_dropbox_client()
-#                             dbx.files_upload(image.read(), image_path, mode=dropbox.files.WriteMode('overwrite'))
-#                             image_paths.append(image_path)  # Add image path to the list
-
-#                 new_data.append({
-#                     "auditId": audit_id,
-#                     "question": q_key,
-#                     "response": response_value,
-#                     "comment": comment,
-#                     "image_path": json.dumps(image_paths) if image_paths else ''  # Save image paths as JSON string
-#                 })
-
-#         # Convert both audit header and form response data into DataFrames
-#         df_new = pd.DataFrame(new_data)
-#         df_audit_header = pd.DataFrame(audit_header_responses)
-
-#         # Load existing responses from Dropbox
-#         df_existing = load_csv_from_dropbox(RESPONSES_CSV_PATH)
-
-#         # Check if the audit ID already exists in the CSV file
-#         if not df_existing.empty and audit_id in df_existing.get('auditId', []):
-#             # Update the existing row for this audit
-#             df_existing.update(df_new)
-#         else:
-#             # Append a new row for this audit
-#             df_existing = pd.concat([df_existing, df_new], ignore_index=True)
-
-#         # Save the updated DataFrame back to Dropbox
-#         save_csv_to_dropbox(df_existing, RESPONSES_CSV_PATH)
-
-#         # Optionally, save audit header data separately or append to the same file
-#         if audit_header_responses:
-#             df_existing_header = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
-#             df_existing_header = pd.concat([df_existing_header, df_audit_header], ignore_index=True)
-#             save_csv_to_dropbox(df_existing_header, RESPONSES_AUDIT_HEADER_CSV_PATH)
-
-#         return jsonify({"status": "success", "message": "Responses saved to Dropbox"})
-
-#     except Exception as e:
-#         logging.error(f"Error in submit_responses: {e}")
-#         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
-
-# @app.route('/api/submit', methods=['POST'])
-# def submit_responses():
-#     try:
-#         data = request.form  # Form data
-#         files = request.files  # Uploaded files
-
-#         audit_id = data.get('auditId')  # Retrieve the audit ID
-#         new_data = []
-#         audit_header_responses = []
-
-#         # Process audit header responses
-#         for key, value in data.items():
-#             if key.startswith("header"):
-#                 q_key = key.split("[")[1][:-1]
-#                 audit_header_responses.append({
-#                     "auditId": audit_id,
-#                     "question": q_key,
-#                     "response": value
-#                 })
-
-#         # Process form responses
-#         for question, response in data.items():
-#             if question.startswith("responses"):
-#                 q_key = question.split("[")[1][:-1]
-#                 response_value = response
-#                 comment = data.get(f'comments[{q_key}]', '')
-#                 image = files.get(f'images[{q_key}]')
-
-#                 # Handle image file saving to Dropbox
-#                 image_filename = None
-#                 if image:
-#                     image_filename = secure_filename(image.filename)
-#                     image_path = f"{UPLOAD_FOLDER}/{image_filename}"
-#                     dbx = get_dropbox_client()
-#                     dbx.files_upload(image.read(), image_path, mode=dropbox.files.WriteMode('overwrite'))
-
-#                 new_data.append({
-#                     "auditId": audit_id,
-#                     "question": q_key,
-#                     "response": response_value,
-#                     "comment": comment,
-#                     "image_path": image_filename or ''
-#                 })
-
-#         # Convert both audit header and form response data into DataFrames
-#         df_new = pd.DataFrame(new_data)
-#         df_audit_header = pd.DataFrame(audit_header_responses)
-
-#         # Load existing responses from Dropbox
-#         df_existing = load_csv_from_dropbox(RESPONSES_CSV_PATH)
-
-#         # Check if the audit ID already exists in the CSV file
-#         if not df_existing.empty and audit_id in df_existing.get('auditId', []):
-#             # Update the existing row for this audit
-#             df_existing.update(df_new)
-#         else:
-#             # Append a new row for this audit
-#             df_existing = pd.concat([df_existing, df_new], ignore_index=True)
-
-#         # Save the updated DataFrame back to Dropbox
-#         save_csv_to_dropbox(df_existing, RESPONSES_CSV_PATH)
-
-#         # Optionally, save audit header data separately or append to the same file
-#         if audit_header_responses:
-#             df_existing_header = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
-#             df_existing_header = pd.concat([df_existing_header, df_audit_header], ignore_index=True)
-#             save_csv_to_dropbox(df_existing_header, RESPONSES_AUDIT_HEADER_CSV_PATH)
-
-#         return jsonify({"status": "success", "message": "Responses saved to Dropbox"})
-
-#     except Exception as e:
-#         logging.error(f"Error in submit_responses: {e}")
-#         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
 
 
 # API to get all audits
@@ -430,30 +279,14 @@ def get_audits():
 
     # Check if the DataFrame is not empty
     if not df.empty:
-        # Function to safely parse JSON from the response field
-        def parse_response(row):
-            try:
-                return json.loads(row) if isinstance(row, str) else row
-            except (ValueError, TypeError):
-                return row  # Return the row as-is if it can't be parsed
-
-        # Parse the 'response' field
-        df['response'] = df['response'].apply(parse_response)
-
-        # Convert response dictionaries to strings to avoid unhashable type errors
-        df['response_str'] = df['response'].apply(lambda x: json.dumps(x) if isinstance(x, dict) else str(x))
-
         # Handle NaN values in the DataFrame (replace NaN with empty strings)
         df = df.fillna(value='')
 
         # Extract relevant audit information
-        audits = df[['auditId', 'question', 'response_str', 'comment', 'image_path']].drop_duplicates()
+        audits = df[['auditId', 'question', 'response', 'comment', 'image_path']].drop_duplicates()
 
-        # Convert 'response_str' back to the original 'response' dict
-        audits['response'] = audits['response_str'].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
-
-        # Drop the temporary string column and convert the result to a dictionary
-        audits = audits.drop(columns=['response_str']).to_dict(orient='records')
+        # Convert the result to a dictionary
+        audits = audits.to_dict(orient='records')
 
         # Return the processed audit data as JSON
         return jsonify(audits)

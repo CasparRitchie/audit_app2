@@ -1,9 +1,7 @@
-// functions/calculateResponses.js
-
 export const calculateCPCNC = (questions) => {
   const counts = { C: 0, PC: 0, NC: 0 };
   questions.forEach((q) => {
-    const response = q.response && q.response.response;
+    const response = q.response; // Directly access the response as it's no longer nested
     if (response === 'C' || response === 'PC' || response === 'NC') {
       counts[response]++;
     }
@@ -14,7 +12,7 @@ export const calculateCPCNC = (questions) => {
 export const calculateOKKO = (questions) => {
   const counts = { OK: 0, KO: 0 };
   questions.forEach((q) => {
-    const response = q.response && q.response.response;
+    const response = q.response; // Directly access the response
     if (response === 'OK' || response === 'KO') {
       counts[response]++;
     }
@@ -25,7 +23,7 @@ export const calculateOKKO = (questions) => {
 export const calculateTemperature = (questions) => {
   const counts = { over63: 0, under63: 0 };
   questions.forEach((q) => {
-    const response = q.response && parseFloat(q.response.response);
+    const response = parseFloat(q.response); // Directly access the response as a number
     if (!isNaN(response)) {
       if (response >= 63) {
         counts.over63++;
@@ -36,6 +34,7 @@ export const calculateTemperature = (questions) => {
   });
   return counts;
 };
+
 // New function to combine all calculations
 export const calculateResponseCounts = (questions) => {
   return {

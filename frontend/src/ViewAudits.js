@@ -8,7 +8,6 @@ function ViewAudits() {
   useEffect(() => {
     axios.get('/api/get_audits')
       .then(response => {
-        // console.log('Audit data:', response.data); // Log the raw data for debugging
         setAudits(groupByAuditId(response.data)); // Store the grouped data in state
       })
       .catch(error => {
@@ -73,7 +72,7 @@ function ViewAudits() {
                 {audits[auditId].map((audit, index) => (
                   <tr key={index}>
                     <td>{audit.question}</td>
-                    <td>{audit.response?.response || ''}</td> {/* Handle nested response */}
+                    <td>{audit.response || ''}</td> {/* Now directly accessing response */}
                     <td>{audit.comment || ''}</td>
                     <td>{audit.image_path || ''}</td>
                   </tr>

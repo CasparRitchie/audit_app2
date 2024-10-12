@@ -12,13 +12,23 @@ function Analyse() {
   const [selectedAuditId, setSelectedAuditId] = useState('');
 
   useEffect(() => {
-    axios.get('/api/get_audits').then((response) => {
-      setAudits(response.data);
-    });
+    axios.get('/api/get_audits')
+      .then((response) => {
+        console.log('Audits:', response.data); // Debugging logs
+        setAudits(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching audits:', error); // Error handling
+      });
 
-    axios.get('/api/audit_detail').then((response) => {
-      setAuditDetail(response.data);
-    });
+    axios.get('/api/audit_detail')
+      .then((response) => {
+        console.log('Audit Details:', response.data); // Debugging logs
+        setAuditDetail(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching audit details:', error); // Error handling
+      });
   }, []);
 
   const uniqueAuditIds = [...new Set(audits.map((audit) => audit.auditId))];

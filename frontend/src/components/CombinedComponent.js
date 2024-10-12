@@ -45,7 +45,6 @@
 //   };
 
 //   const loadChartsSequentially = async () => {
-//     const timestamp = Date.now() + Math.random();
 //     const newQueue = [...imageQueue];
 
 //     for (let i = 0; i < newQueue.length; i++) {
@@ -58,11 +57,14 @@
 //         [`${sectionKey}-${chartType}`]: blobUrl,
 //       }));
 
-//       await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate loading delay
+//       // Simulate a slight delay between loading charts
+//       await new Promise((resolve) => setTimeout(resolve, 500));
 //     }
 //   };
 
 //   useEffect(() => {
+//     const newQueue = [];
+
 //     Object.keys(auditDetail).forEach((chapitre) => {
 //       Object.keys(auditDetail[chapitre]).forEach((sousChapitre) => {
 //         Object.keys(auditDetail[chapitre][sousChapitre]).forEach((paragraphe) => {
@@ -71,8 +73,8 @@
 //             const sousParagrapheKey = `${sousChapitre}-${paragraphe}-${sousParagraphe}`; // Unique key
 
 //             const responseCounts = calculateResponseCounts(sectionQuestions);
-//             const newQueue = [];
 
+//             // Generate and queue chart URLs for each section
 //             const cpcncUrl = generateChartUrl(responseCounts, 'CPCNC');
 //             if (cpcncUrl) {
 //               newQueue.push({ url: `${cpcncUrl}?t=${Date.now()}`, sectionKey: sousParagrapheKey, chartType: 'CPCNC' });
@@ -87,17 +89,18 @@
 //             if (temperatureUrl) {
 //               newQueue.push({ url: `${temperatureUrl}?t=${Date.now()}`, sectionKey: sousParagrapheKey, chartType: 'Temperature' });
 //             }
-
-//             setImageQueue((prevQueue) => [...prevQueue, ...newQueue]);
 //           });
 //         });
 //       });
 //     });
+
+//     setImageQueue(newQueue); // Update the image queue for loading
+
 //   }, [auditDetail, filteredAudits]);
 
 //   useEffect(() => {
 //     if (imageQueue.length > 0) {
-//       loadChartsSequentially();
+//       loadChartsSequentially(); // Load charts only when the queue is updated
 //     }
 //   }, [imageQueue]);
 
@@ -151,7 +154,7 @@
 
 //                       <ResponsesTable sousParagraphe={sousParagraphe} responseCounts={responseCounts} />
 
-//                       {/* Render chart URLs */}
+//                       {/* Render charts */}
 //                       <div>
 //                         {sectionChartUrls[`${sousParagrapheKey}-CPCNC`] && (
 //                           <img src={sectionChartUrls[`${sousParagrapheKey}-CPCNC`]} alt="CPCNC Chart" />
@@ -206,11 +209,15 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits }) => {
 
     sectionQuestions.forEach((questionObj) => {
       const response = findResponseForQuestion(filteredAudits, questionObj.id);
+
+      // Check if the response is directly 'C', 'PC', 'NC', 'OK', 'KO', or a temperature value.
       if (response === 'C') responseCounts.C++;
       if (response === 'PC') responseCounts.PC++;
       if (response === 'NC') responseCounts.NC++;
       if (response === 'OK') responseCounts.OK++;
       if (response === 'KO') responseCounts.KO++;
+
+      // Handle temperature responses
       const temperature = parseFloat(response);
       if (!isNaN(temperature)) {
         if (temperature >= 63) {
@@ -229,16 +236,25 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits }) => {
 
     for (let i = 0; i < newQueue.length; i++) {
       const { url, sectionKey, chartType } = newQueue[i];
-      const response = await fetch(url, { responseType: 'blob' });
-      const blobUrl = URL.createObjectURL(await response.blob());
 
-      setSectionChartUrls((prev) => ({
-        ...prev,
-        [`${sectionKey}-${chartType}`]: blobUrl,
-      }));
+      console.log(`Loading chart for section: ${sectionKey} - chart type: ${chartType}`);
 
-      // Simulate a slight delay between loading charts
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      try {
+        const response = await fetch(url, { responseType: 'blob' });
+        const blobUrl = URL.createObjectURL(await response.blob());
+
+        setSectionChartUrls((prev) => ({
+          ...prev,
+          [`${sectionKey}-${chartType}`]: blobUrl,
+        }));
+
+        console.log(`Chart loaded for section: ${sectionKey} - chart type: ${chartType}`);
+
+        // Simulate a slight delay between loading charts
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Failed to load chart for ${sectionKey} - ${chartType}:`, error);
+      }
     }
   };
 

@@ -1,17 +1,21 @@
 
 // Function to find the corresponding response for a question ID
 export const findResponseForQuestion = (filteredAudits, questionId) => {
-  // console.log("Searching for Question ID:", questionId);
+  console.log("Searching for Question ID:", questionId);
   // console.log("filteredAudits:", filteredAudits);
 
-  const responseObj = filteredAudits.find((audit) => audit.question === String(questionId));
+  // Convert questionId to number to ensure consistent type
+  const numericQuestionId = parseInt(questionId, 10);
+
+  // Find the audit response by matching the numeric question ID
+  const responseObj = filteredAudits.find((audit) => audit.question === numericQuestionId);
 
   if (responseObj && responseObj.response) {
-    // console.log("Found response:", responseObj.response.response);
-    return responseObj.response.response;
+    console.log("Found response:", responseObj.response);
+    return responseObj.response;  // Return the response as is
   } else {
-    // console.log("No response found for Question ID:", questionId);
-    return 'No response';
+    console.log("No response found for Question ID:", questionId);
+    return 'No response';  // Return 'No response' if nothing is found
   }
 };
 
