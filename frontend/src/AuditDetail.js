@@ -863,6 +863,9 @@ function AuditDetail({ updateProgress }) {
     fetchData();
   }, []);
 
+
+  const getRowColor = (index) => (index % 2 === 0 ? '#f8f9fa' : '#ffffff');
+
   const handleDuplicate = (questionObj) => {
     const { id } = questionObj;
     const duplicateId = `${id}-duplicate-${Date.now()}`;
@@ -1032,46 +1035,38 @@ function AuditDetail({ updateProgress }) {
                       </div>
                     )}
 
-                    {/* Active Questions */}
+                    {/* Active Questions with Alternating Colors */}
                     {expandedSousChapitres[sousChapitre] &&
                       Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
                         <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
                           <h5>{paragraphe}</h5>
-                          {Object.entries(sousParagraphes).map(([_, questions]) =>
-                            questions
+                          {Object.entries(sousParagraphes).map(([_, questions]) => {
+                            const combinedQuestions = questions
                               .filter((q) => !(removedQuestions[sousChapitre] || []).find((r) => r.id === q.id))
-                              .map((questionObj) => (
-                                <React.Fragment key={questionObj.id}>
-                                  <QuestionComponent
-                                    questionObj={questionObj}
-                                    handleRemove={(q) => handleRemoveQuestion(sousChapitre, q)}
-                                    formResponses={formResponses}
-                                    handleInputChange={handleInputChange}
-                                    handleCommentChange={handleCommentChange}
-                                    handleImageChange={handleImageChange}
-                                    handleDuplicate={handleDuplicate}
-                                    comments={comments}
-                                    images={images}
-                                    setImages={setImages}
-                                  />
-                                  {duplicates[questionObj.id]?.map((duplicate) => (
-                                    <QuestionComponent
-                                      key={duplicate.duplicateId}
-                                      questionObj={duplicate}
-                                      formResponses={formResponses}
-                                      handleInputChange={handleInputChange}
-                                      handleCommentChange={handleCommentChange}
-                                      handleImageChange={handleImageChange}
-                                      handleDuplicate={handleDuplicate}
-                                      handleRemove={() => handleRemoveDuplicate(duplicate.duplicateId)}
-                                      comments={comments}
-                                      images={images}
-                                      setImages={setImages}
-                                    />
-                                  ))}
-                                </React.Fragment>
-                              ))
-                          )}
+                              .reduce((acc, questionObj) => {
+                                acc.push(questionObj);
+                                const questionDuplicates = duplicates[questionObj.id] || [];
+                                return acc.concat(questionDuplicates);
+                              }, []);
+
+                            // Render combined list with alternating colors
+                            return combinedQuestions.map((questionObj, index) => (
+                              <div key={questionObj.duplicateId || questionObj.id} style={{ backgroundColor: getRowColor(index) }}>
+                                <QuestionComponent
+                                  questionObj={questionObj}
+                                  formResponses={formResponses}
+                                  handleInputChange={handleInputChange}
+                                  handleCommentChange={handleCommentChange}
+                                  handleImageChange={handleImageChange}
+                                  handleDuplicate={handleDuplicate}
+                                  handleRemove={(q) => handleRemoveQuestion(sousChapitre, q)}
+                                  comments={comments}
+                                  images={images}
+                                  setImages={setImages}
+                                />
+                              </div>
+                            ));
+                          })}
                         </div>
                       ))}
                   </div>
