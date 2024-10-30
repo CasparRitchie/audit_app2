@@ -1,96 +1,423 @@
+// // // // // // // // // import React, { useEffect, useState, useCallback } from 'react';
+// // // // // // // // // import axios from 'axios';
+// // // // // // // // // import Sidebar from './Sidebar';
+// // // // // // // // // import QuestionComponent from './QuestionComponent';
+// // // // // // // // // import DuplicateQuestionComponent from './DuplicateQuestionComponent';
 
-// // import React, { useEffect, useState, useCallback } from 'react';
+// // // // // // // // // function AuditDetail({ updateProgress }) {
+// // // // // // // // //   const [data, setData] = useState(null);
+// // // // // // // // //   const [formResponses, setFormResponses] = useState({});
+// // // // // // // // //   const [comments, setComments] = useState({});
+// // // // // // // // //   const [images, setImages] = useState({});
+// // // // // // // // //   const [imagePreviews, setImagePreviews] = useState({});
+// // // // // // // // //   const [duplicates, setDuplicates] = useState({});
+// // // // // // // // //   const [removedQuestions, setRemovedQuestions] = useState({});
+// // // // // // // // //   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
+// // // // // // // // //   const [auditId, setAuditId] = useState(null);
+
+// // // // // // // // //   // Calculate progress function
+// // // // // // // // //   const calculateProgress = useCallback((auditData = {}, responses = {}, removedQuestions = {}) => {
+// // // // // // // // //     let progressData = {};
+// // // // // // // // //     Object.entries(auditData).forEach(([chapitre, sousChapitres]) => {
+// // // // // // // // //       Object.entries(sousChapitres).forEach(([sousChapitre, paragraphes]) => {
+// // // // // // // // //         let sousChapitreTotalQuestions = 0;
+// // // // // // // // //         let sousChapitreAnsweredQuestions = 0;
+// // // // // // // // //         let paragrapheProgressData = {};
+
+// // // // // // // // //         Object.entries(paragraphes).forEach(([paragraphe, sousParagraphes]) => {
+// // // // // // // // //           let paragrapheTotalQuestions = 0;
+// // // // // // // // //           let paragrapheAnsweredQuestions = 0;
+
+// // // // // // // // //           Object.entries(sousParagraphes).forEach(([_, questions]) => {
+// // // // // // // // //             const activeQuestions = questions.filter(
+// // // // // // // // //               (question) => !(removedQuestions[sousChapitre] || []).find((q) => q.id === question.id)
+// // // // // // // // //             );
+
+// // // // // // // // //             paragrapheTotalQuestions += activeQuestions.length;
+// // // // // // // // //             activeQuestions.forEach((question) => {
+// // // // // // // // //               if (responses[question.id]?.response) paragrapheAnsweredQuestions += 1;
+// // // // // // // // //             });
+// // // // // // // // //           });
+
+// // // // // // // // //           const paragraphePercentage = paragrapheTotalQuestions
+// // // // // // // // //             ? Math.round((paragrapheAnsweredQuestions / paragrapheTotalQuestions) * 100)
+// // // // // // // // //             : 0;
+
+// // // // // // // // //           sousChapitreTotalQuestions += paragrapheTotalQuestions;
+// // // // // // // // //           sousChapitreAnsweredQuestions += paragrapheAnsweredQuestions;
+// // // // // // // // //           paragrapheProgressData[paragraphe] = { percentage: paragraphePercentage };
+// // // // // // // // //         });
+
+// // // // // // // // //         const sousChapitrePercentage = sousChapitreTotalQuestions
+// // // // // // // // //           ? Math.round((sousChapitreAnsweredQuestions / sousChapitreTotalQuestions) * 100)
+// // // // // // // // //           : 0;
+
+// // // // // // // // //         progressData[sousChapitre] = {
+// // // // // // // // //           percentage: sousChapitrePercentage,
+// // // // // // // // //           paragraphes: paragrapheProgressData,
+// // // // // // // // //         };
+// // // // // // // // //       });
+// // // // // // // // //     });
+
+// // // // // // // // //     return progressData;
+// // // // // // // // //   }, []);
+
+// // // // // // // // //   // Load and set data with storage integration
+// // // // // // // // //   useEffect(() => {
+// // // // // // // // //     const fetchData = async () => {
+// // // // // // // // //       try {
+// // // // // // // // //         const response = await axios.get('/api/audit_detail');
+// // // // // // // // //         setData(response.data);
+// // // // // // // // //         console.log("Fetched data:", response.data); // Check data structure
+// // // // // // // // //         const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
+// // // // // // // // //         const storedRemovedQuestions = JSON.parse(localStorage.getItem("removedQuestions")) || {};
+
+// // // // // // // // //         if (storedResponses) setFormResponses(storedResponses);
+// // // // // // // // //         setRemovedQuestions(storedRemovedQuestions);
+// // // // // // // // //       } catch (error) {
+// // // // // // // // //         console.error('Error fetching data:', error);
+// // // // // // // // //       }
+// // // // // // // // //     };
+
+// // // // // // // // //     fetchData();
+// // // // // // // // //   }, [calculateProgress]);
+
+// // // // // // // // //   const handleInputChange = (event, questionId) => {
+// // // // // // // // //     const { value } = event.target;
+// // // // // // // // //     const updatedResponses = {
+// // // // // // // // //       ...formResponses,
+// // // // // // // // //       [questionId]: { ...formResponses[questionId], response: value },
+// // // // // // // // //     };
+// // // // // // // // //     setFormResponses(updatedResponses);
+// // // // // // // // //     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+// // // // // // // // //     updateProgress(calculateProgress(data, updatedResponses, removedQuestions));
+// // // // // // // // //   };
+
+// // // // // // // // //   const handleCommentChange = (event, questionId) => {
+// // // // // // // // //     const { value } = event.target;
+// // // // // // // // //     setComments((prev) => ({ ...prev, [questionId]: value }));
+// // // // // // // // //     const updatedResponses = {
+// // // // // // // // //       ...formResponses,
+// // // // // // // // //       [questionId]: {
+// // // // // // // // //         ...formResponses[questionId],
+// // // // // // // // //         comment: value,
+// // // // // // // // //         response: formResponses[questionId]?.response || '',
+// // // // // // // // //       },
+// // // // // // // // //     };
+// // // // // // // // //     setFormResponses(updatedResponses);
+// // // // // // // // //     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+// // // // // // // // //   };
+
+// // // // // // // // //   const handleImageChange = (event, questionId) => {
+// // // // // // // // //     const files = Array.from(event.target.files);
+// // // // // // // // //     setImages((prev) => ({ ...prev, [questionId]: [...(prev[questionId] || []), ...files] }));
+// // // // // // // // //     localStorage.setItem(
+// // // // // // // // //       "auditResponses",
+// // // // // // // // //       JSON.stringify({
+// // // // // // // // //         ...formResponses,
+// // // // // // // // //         [questionId]: {
+// // // // // // // // //           ...formResponses[questionId],
+// // // // // // // // //           images: [...(formResponses[questionId]?.images || []), ...files.map((file) => file.name)],
+// // // // // // // // //         },
+// // // // // // // // //       })
+// // // // // // // // //     );
+// // // // // // // // //   };
+
+// // // // // // // // //   const handleDuplicate = (questionObj) => {
+// // // // // // // // //     const { id } = questionObj;
+// // // // // // // // //     const duplicateId = `${id}-duplicate-${Date.now()}`;
+// // // // // // // // //     setDuplicates((prev) => ({
+// // // // // // // // //       ...prev,
+// // // // // // // // //       [id]: [...(prev[id] || []), { ...questionObj, duplicateId }],
+// // // // // // // // //     }));
+// // // // // // // // //   };
+
+// // // // // // // // //   const handleRemoveQuestion = (sousChapitre, questionId, questionTitle) => {
+// // // // // // // // //     const updatedRemovedQuestions = {
+// // // // // // // // //       ...removedQuestions,
+// // // // // // // // //       [sousChapitre]: [
+// // // // // // // // //         ...(removedQuestions[sousChapitre] || []),
+// // // // // // // // //         { id: questionId, title: questionTitle },
+// // // // // // // // //       ],
+// // // // // // // // //     };
+// // // // // // // // //     setRemovedQuestions(updatedRemovedQuestions);
+// // // // // // // // //     localStorage.setItem("removedQuestions", JSON.stringify(updatedRemovedQuestions));
+// // // // // // // // //   };
+
+// // // // // // // // //   const handleRemoveDuplicate = (duplicateId) => {
+// // // // // // // // //     setDuplicates((prev) => {
+// // // // // // // // //       const updatedDuplicates = {};
+// // // // // // // // //       Object.keys(prev).forEach((questionId) => {
+// // // // // // // // //         updatedDuplicates[questionId] = prev[questionId].filter(
+// // // // // // // // //           (duplicate) => duplicate.duplicateId !== duplicateId
+// // // // // // // // //         );
+// // // // // // // // //         if (updatedDuplicates[questionId].length === 0) delete updatedDuplicates[questionId];
+// // // // // // // // //       });
+// // // // // // // // //       return updatedDuplicates;
+// // // // // // // // //     });
+// // // // // // // // //   };
+
+// // // // // // // // //   const handleReAddQuestion = (sousChapitre, questionId) => {
+// // // // // // // // //     const updatedRemovedQuestions = {
+// // // // // // // // //       ...removedQuestions,
+// // // // // // // // //       [sousChapitre]: removedQuestions[sousChapitre].filter((item) => item.id !== questionId),
+// // // // // // // // //     };
+// // // // // // // // //     if (updatedRemovedQuestions[sousChapitre].length === 0) delete updatedRemovedQuestions[sousChapitre];
+// // // // // // // // //     setRemovedQuestions(updatedRemovedQuestions);
+// // // // // // // // //     localStorage.setItem("removedQuestions", JSON.stringify(updatedRemovedQuestions));
+// // // // // // // // //   };
+
+// // // // // // // // //   return (
+// // // // // // // // //     <div className="container-fluid">
+// // // // // // // // //       <div className="row">
+// // // // // // // // //         <div className="col-md-3">
+// // // // // // // // //           {data && <Sidebar data={calculateProgress(data, formResponses, removedQuestions)} />}
+// // // // // // // // //         </div>
+
+// // // // // // // // //         <div className="col-md-9">
+// // // // // // // // //           <h2>Grilles de l'audit</h2>
+// // // // // // // // //           {data && Object.entries(data).map(([chapitre, sousChapitres]) => (
+// // // // // // // // //             <div key={chapitre}>
+// // // // // // // // //               <h3>{chapitre}</h3>
+// // // // // // // // //               {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
+// // // // // // // // //                 <div key={sousChapitre} id={sousChapitre} className="mb-3">
+// // // // // // // // //                   <h4 className="paragraphe-header">
+// // // // // // // // //                     <button
+// // // // // // // // //                       type="button"
+// // // // // // // // //                       className="btn btn-link"
+// // // // // // // // //                       onClick={() => setExpandedSousChapitres((prev) => ({
+// // // // // // // // //                         ...prev,
+// // // // // // // // //                         [sousChapitre]: !prev[sousChapitre],
+// // // // // // // // //                       }))}
+// // // // // // // // //                     >
+// // // // // // // // //                       {expandedSousChapitres[sousChapitre] ? '▼' : '▶'} {sousChapitre}
+// // // // // // // // //                     </button>
+// // // // // // // // //                   </h4>
+
+// // // // // // // // //                   {/* Render Removed Questions */}
+// // // // // // // // //                   {removedQuestions[sousChapitre]?.length > 0 && (
+// // // // // // // // //                     <div style={{ backgroundColor: '#f8d7da', padding: '10px', marginBottom: '10px' }}>
+// // // // // // // // //                       <h5>Removed Questions</h5>
+// // // // // // // // //                       {removedQuestions[sousChapitre].map((removed) => (
+// // // // // // // // //                         <div key={removed.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+// // // // // // // // //                           <span>{removed.title}</span>
+// // // // // // // // //                           <button
+// // // // // // // // //                             type="button"
+// // // // // // // // //                             className="btn btn-link"
+// // // // // // // // //                             onClick={() => handleReAddQuestion(sousChapitre, removed.id)}
+// // // // // // // // //                             style={{ color: '#007bff' }}
+// // // // // // // // //                           >
+// // // // // // // // //                             Re-add
+// // // // // // // // //                           </button>
+// // // // // // // // //                         </div>
+// // // // // // // // //                       ))}
+// // // // // // // // //                     </div>
+// // // // // // // // //                   )}
+
+// // // // // // // // //                   {/* Render Active Questions */}
+// // // // // // // // //                   {expandedSousChapitres[sousChapitre] && paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
+// // // // // // // // //                     <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
+// // // // // // // // //                       <h5>{paragraphe}</h5>
+// // // // // // // // //                       {sousParagraphes && Object.entries(sousParagraphes).map(([_, questions]) =>
+// // // // // // // // //                         questions
+// // // // // // // // //                           .filter((q) => !(removedQuestions[sousChapitre] || []).find((r) => r.id === q.id))
+// // // // // // // // //                           .map((questionObj, index) =>
+// // // // // // // // //                             questionObj.duplicateId ? (
+// // // // // // // // //                               <DuplicateQuestionComponent
+// // // // // // // // //                                 key={questionObj.duplicateId}
+// // // // // // // // //                                 duplicate={questionObj}
+// // // // // // // // //                                 index={index}
+// // // // // // // // //                                 formResponses={formResponses}
+// // // // // // // // //                                 handleInputChange={handleInputChange}
+// // // // // // // // //                                 handleCommentChange={handleCommentChange}
+// // // // // // // // //                                 handleImageChange={handleImageChange}
+// // // // // // // // //                                 handleRemoveDuplicate={() => handleRemoveDuplicate(questionObj.duplicateId)}
+// // // // // // // // //                                 handleRemove={handleRemoveQuestion}
+// // // // // // // // //                                 comments={comments}
+// // // // // // // // //                                 images={images}
+// // // // // // // // //                               />
+// // // // // // // // //                             ) : (
+// // // // // // // // //                               <QuestionComponent
+// // // // // // // // //                                 key={questionObj.id}
+// // // // // // // // //                                 questionObj={questionObj}
+// // // // // // // // //                                 formResponses={formResponses}
+// // // // // // // // //                                 handleInputChange={handleInputChange}
+// // // // // // // // //                                 handleCommentChange={handleCommentChange}
+// // // // // // // // //                                 handleImageChange={handleImageChange}
+// // // // // // // // //                                 handleDuplicate={() => handleDuplicate(questionObj)}
+// // // // // // // // //                                 handleRemove={() => handleRemoveQuestion(sousChapitre, questionObj.id, questionObj.question)}
+// // // // // // // // //                                 comments={comments}
+// // // // // // // // //                                 images={images}
+// // // // // // // // //                               />
+// // // // // // // // //                             )
+// // // // // // // // //                           )
+// // // // // // // // //                       )}
+// // // // // // // // //                     </div>
+// // // // // // // // //                   ))}
+// // // // // // // // //                 </div>
+// // // // // // // // //               ))}
+// // // // // // // // //             </div>
+// // // // // // // // //           ))}
+// // // // // // // // //           <button type="submit" className="btn btn-primary">Envoyer</button>
+// // // // // // // // //         </div>
+// // // // // // // // //       </div>
+// // // // // // // // //     </div>
+// // // // // // // // //   );
+// // // // // // // // // }
+
+// // // // // // // // // export default AuditDetail;
+
+// // // import React, { useEffect, useState, useCallback } from 'react';
+// // // import axios from 'axios';
+// // // import Sidebar from './Sidebar';
+// // // import QuestionComponent from './QuestionComponent';
+
+// // // function AuditDetail({ updateProgress }) {
+// // //   const [data, setData] = useState(null);
+// // //   const [formResponses, setFormResponses] = useState({});
+// // //   const [comments, setComments] = useState({});
+// // //   const [images, setImages] = useState({});
+// // //   const [duplicates, setDuplicates] = useState({});
+// // //   const [removedQuestions, setRemovedQuestions] = useState({});
+// // //   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
+
+// // //   useEffect(() => {
+// // //     const fetchData = async () => {
+// // //       try {
+// // //         const response = await axios.get('/api/audit_detail');
+// // //         setData(response.data);
+// // //         const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
+// // //         const storedRemovedQuestions = JSON.parse(localStorage.getItem("removedQuestions")) || {};
+
+// // //         if (storedResponses) setFormResponses(storedResponses);
+// // //         setRemovedQuestions(storedRemovedQuestions);
+// // //       } catch (error) {
+// // //         console.error('Error fetching data:', error);
+// // //       }
+// // //     };
+// // //     fetchData();
+// // //   }, []);
+
+// // //   const handleInputChange = (event, questionId) => {
+// // //         const { value } = event.target;
+// // //         const updatedResponses = {
+// // //           ...formResponses,
+// // //           [questionId]: { ...formResponses[questionId], response: value },
+// // //         };
+// // //         setFormResponses(updatedResponses);
+// // //         localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+// // //         updateProgress(calculateProgress(data, updatedResponses, removedQuestions));
+// // //       };
+// // //   const handleCommentChange = (event, questionId) => { /* Update comments logic */ };
+// // //   const handleImageChange = (event, questionId) => { /* Update images logic */ };
+// // //   const handleDuplicate = (questionObj) => { /* Duplicate handling */ };
+// // //   const handleRemoveQuestion = (sousChapitre, questionId, questionTitle) => { /* Removing question logic */ };
+// // //   const handleRemoveDuplicate = (duplicateId) => { /* Removing duplicate logic */ };
+// // //   const handleReAddQuestion = (sousChapitre, questionId) => { /* Re-adding question logic */ };
+
+// // //   return (
+// // //     <div className="container-fluid">
+// // //       <div className="row">
+// // //         <div className="col-md-3">
+// // //           {data && <Sidebar
+// // //             data={data}
+// // //             formResponses={formResponses}
+// // //             removedQuestions={removedQuestions}
+// // //           />}
+// // //         </div>
+// // //         <div className="col-md-9">
+// // //           <h2>Grilles de l'audit</h2>
+// // //           {data && Object.entries(data).map(([chapitre, sousChapitres]) => (
+// // //             <div key={chapitre}>
+// // //               <h3>{chapitre}</h3>
+// // //               {Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
+// // //                 <div key={sousChapitre} id={sousChapitre} className="mb-3">
+// // //                   <h4 className="paragraphe-header">
+// // //                     <button
+// // //                       type="button"
+// // //                       className="btn btn-link"
+// // //                       onClick={() => setExpandedSousChapitres((prev) => ({
+// // //                         ...prev,
+// // //                         [sousChapitre]: !prev[sousChapitre],
+// // //                       }))}
+// // //                     >
+// // //                       {expandedSousChapitres[sousChapitre] ? '▼' : '▶'} {sousChapitre}
+// // //                     </button>
+// // //                   </h4>
+
+// // //                   {/* Removed Questions Section */}
+// // //                   {removedQuestions[sousChapitre]?.length > 0 && (
+// // //                     <div style={{ backgroundColor: '#f8d7da', padding: '10px', marginBottom: '10px' }}>
+// // //                       <h5>Removed Questions</h5>
+// // //                       {removedQuestions[sousChapitre].map((removed) => (
+// // //                         <div key={removed.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+// // //                           <span>{removed.title}</span>
+// // //                           <button
+// // //                             type="button"
+// // //                             className="btn btn-link"
+// // //                             onClick={() => handleReAddQuestion(sousChapitre, removed.id)}
+// // //                             style={{ color: '#007bff' }}
+// // //                           >
+// // //                             Re-add
+// // //                           </button>
+// // //                         </div>
+// // //                       ))}
+// // //                     </div>
+// // //                   )}
+
+// // //                   {/* Active Questions */}
+// // //                   {expandedSousChapitres[sousChapitre] &&
+// // //                     Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
+// // //                       <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
+// // //                         <h5>{paragraphe}</h5>
+// // //                         {Object.entries(sousParagraphes).map(([_, questions]) =>
+// // //                           questions
+// // //                             .filter((q) => !(removedQuestions[sousChapitre] || []).find((r) => r.id === q.id))
+// // //                             .map((questionObj, index) => (
+// // //                               <QuestionComponent
+// // //                                 key={questionObj.id}
+// // //                                 questionObj={questionObj}
+// // //                                 formResponses={formResponses}
+// // //                                 handleInputChange={handleInputChange}
+// // //                                 handleCommentChange={handleCommentChange}
+// // //                                 handleImageChange={handleImageChange}
+// // //                                 handleDuplicate={handleDuplicate}
+// // //                                 handleRemove={() => handleRemoveQuestion(sousChapitre, questionObj.id, questionObj.question)}
+// // //                                 comments={comments}
+// // //                                 images={images}
+// // //                                 setImages={setImages}
+// // //                               />
+// // //                             ))
+// // //                         )}
+// // //                       </div>
+// // //                     ))}
+// // //                 </div>
+// // //               ))}
+// // //             </div>
+// // //           ))}
+// // //           <button type="submit" className="btn btn-primary">Envoyer</button>
+// // //         </div>
+// // //       </div>
+// // //     </div>
+// // //   );
+// // // }
+
+// // // export default AuditDetail;
+
+
+// // import React, { useEffect, useState } from 'react';
 // // import axios from 'axios';
-// // import QuestionBaseComponent from './QuestionBaseComponent';
+// // import Sidebar from './Sidebar';
+// // import QuestionComponent from './QuestionComponent';
 
 // // function AuditDetail({ updateProgress }) {
 // //   const [data, setData] = useState(null);
 // //   const [formResponses, setFormResponses] = useState({});
 // //   const [comments, setComments] = useState({});
 // //   const [images, setImages] = useState({});
-// //   const [imagePreviews, setImagePreviews] = useState({}); // Store image preview URLs
 // //   const [duplicates, setDuplicates] = useState({});
 // //   const [removedQuestions, setRemovedQuestions] = useState({});
 // //   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
-// //   const [auditId, setAuditId] = useState(null);
-
-// //   const calculateProgress = useCallback((auditData = {}, responses = {}, removedQuestions = {}) => {
-// //     let progressData = {};
-// //     Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
-// //       Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
-// //         let sousChapitreTotalQuestions = 0;
-// //         let sousChapitreAnsweredQuestions = 0;
-// //         let paragrapheProgressData = {};
-
-// //         Object.entries(paragraphes || {}).forEach(([paragraphe, sousParagraphes = {}]) => {
-// //           let paragrapheTotalQuestions = 0;
-// //           let paragrapheAnsweredQuestions = 0;
-
-// //           Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
-// //             const activeQuestions = questions.filter(
-// //               (question) => !(removedQuestions[sousChapitre] || []).includes(question.id)
-// //             );
-
-// //             paragrapheTotalQuestions += activeQuestions.length;
-
-// //             activeQuestions.forEach((question) => {
-// //               if (responses[question.id]?.response) {
-// //                 paragrapheAnsweredQuestions += 1;
-// //               }
-
-// //               const duplicateQuestions = duplicates[question.id] || [];
-// //               const activeDuplicates = duplicateQuestions.filter(
-// //                 (duplicate) => !(removedQuestions[sousChapitre] || []).includes(duplicate.duplicateId)
-// //               );
-
-// //               paragrapheTotalQuestions += activeDuplicates.length;
-
-// //               activeDuplicates.forEach((duplicate) => {
-// //                 if (responses[duplicate.duplicateId]?.response) {
-// //                   paragrapheAnsweredQuestions += 1;
-// //                 }
-// //               });
-// //             });
-// //           });
-
-// //           const paragraphePercentageComplete = paragrapheTotalQuestions > 0
-// //             ? Math.round((paragrapheAnsweredQuestions / paragrapheTotalQuestions) * 100)
-// //             : 0;
-
-// //           sousChapitreTotalQuestions += paragrapheTotalQuestions;
-// //           sousChapitreAnsweredQuestions += paragrapheAnsweredQuestions;
-
-// //           paragrapheProgressData[paragraphe] = {
-// //             percentage: paragraphePercentageComplete,
-// //             totalQuestions: paragrapheTotalQuestions,
-// //             answeredQuestions: paragrapheAnsweredQuestions,
-// //           };
-// //         });
-
-// //         const sousChapitrePercentageComplete = sousChapitreTotalQuestions > 0
-// //           ? Math.round((sousChapitreAnsweredQuestions / sousChapitreTotalQuestions) * 100)
-// //           : 0;
-
-// //         progressData[sousChapitre] = {
-// //           percentage: sousChapitrePercentageComplete,
-// //           totalQuestions: sousChapitreTotalQuestions,
-// //           answeredQuestions: sousChapitreAnsweredQuestions,
-// //           paragraphes: paragrapheProgressData,
-// //         };
-// //       });
-// //     });
-
-// //     return progressData;
-// //   }, [duplicates]);
-
-
-// //   useEffect(() => {
-// //     if (data) {
-// //       const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
-// //       updateProgress(updatedProgress);
-// //     }
-// //   }, [data, formResponses, duplicates, removedQuestions, updateProgress, calculateProgress]);
-
 
 // //   useEffect(() => {
 // //     const fetchData = async () => {
@@ -98,85 +425,16 @@
 // //         const response = await axios.get('/api/audit_detail');
 // //         setData(response.data);
 // //         const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
-// //         const storedAuditId = localStorage.getItem("auditId");
+// //         const storedRemovedQuestions = JSON.parse(localStorage.getItem("removedQuestions")) || {};
 
-// //         if (storedResponses) {
-// //           setFormResponses(storedResponses);
-// //         }
-
-// //         if (storedAuditId) {
-// //           setAuditId(storedAuditId);
-// //         } else {
-// //           const newAuditId = Date.now().toString();
-// //           setAuditId(newAuditId);
-// //           localStorage.setItem("auditId", newAuditId);
-// //         }
-
-// //         updateProgress(calculateProgress(response.data, storedResponses, removedQuestions));
+// //         if (storedResponses) setFormResponses(storedResponses);
+// //         setRemovedQuestions(storedRemovedQuestions);
 // //       } catch (error) {
 // //         console.error('Error fetching data:', error);
 // //       }
 // //     };
-
 // //     fetchData();
-// //   }, [calculateProgress, updateProgress, removedQuestions]);
-
-// //   // Sticky Header Effect for h3, h4, and h5 elements
-// // useEffect(() => {
-// //   const handleScroll = () => {
-// //     const h3Headers = document.querySelectorAll('h3');
-// //     const h4Headers = document.querySelectorAll('h4');
-// //     const h5Headers = document.querySelectorAll('h5');
-
-// //     // Sticky behavior for h3 elements
-// //     h3Headers.forEach((header, index) => {
-// //       const nextHeader = h3Headers[index + 1]; // Get the next h3 element
-// //       const headerRect = header.getBoundingClientRect();
-// //       const nextHeaderRect = nextHeader?.getBoundingClientRect();
-
-// //       // When the next h3 is about to overlap the current sticky h3
-// //       if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
-// //         header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
-// //       } else {
-// //         header.style.transform = 'translateY(0)'; // Reset transformation
-// //       }
-// //     });
-
-// //     // Sticky behavior for h4 elements
-// //     h4Headers.forEach((header, index) => {
-// //       const nextHeader = h4Headers[index + 1]; // Get the next h4 element
-// //       const headerRect = header.getBoundingClientRect();
-// //       const nextHeaderRect = nextHeader?.getBoundingClientRect();
-
-// //       // When the next h4 is about to overlap the current sticky h4
-// //       if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
-// //         header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
-// //       } else {
-// //         header.style.transform = 'translateY(0)'; // Reset transformation
-// //       }
-// //     });
-
-// //     // Sticky behavior for h5 elements
-// //     h5Headers.forEach((header, index) => {
-// //       const nextHeader = h5Headers[index + 1]; // Get the next h5 element
-// //       const headerRect = header.getBoundingClientRect();
-// //       const nextHeaderRect = nextHeader?.getBoundingClientRect();
-
-// //       // When the next h5 is about to overlap the current sticky h5
-// //       if (nextHeaderRect && nextHeaderRect.top <= headerRect.height) {
-// //         header.style.transform = `translateY(${nextHeaderRect.top - headerRect.height}px)`;
-// //       } else {
-// //         header.style.transform = 'translateY(0)'; // Reset transformation
-// //       }
-// //     });
-// //   };
-
-// //   window.addEventListener('scroll', handleScroll);
-
-// //   return () => {
-// //     window.removeEventListener('scroll', handleScroll); // Cleanup event listener
-// //   };
-// // }, []);
+// //   }, []);
 
 // //   const handleInputChange = (event, questionId) => {
 // //     const { value } = event.target;
@@ -186,248 +444,170 @@
 // //     };
 // //     setFormResponses(updatedResponses);
 // //     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
-// //     updateProgress(calculateProgress(data, updatedResponses, removedQuestions));
+// //     // `updateProgress` can be used here if it triggers any other necessary updates.
+// //     updateProgress();
 // //   };
+
 
 // //   const handleCommentChange = (event, questionId) => {
 // //     const { value } = event.target;
-// //     setComments(prev => ({
-// //       ...prev,
-// //       [questionId]: value,
-// //     }));
-// //     localStorage.setItem("auditResponses", JSON.stringify({
+// //     setComments((prev) => ({ ...prev, [questionId]: value }));
+// //     const updatedResponses = {
 // //       ...formResponses,
-// //       [questionId]: { ...formResponses[questionId], comment: value },
-// //     }));
+// //       [questionId]: {
+// //         ...formResponses[questionId],
+// //         comment: value,
+// //         response: formResponses[questionId]?.response || '',
+// //       },
+// //     };
+// //     setFormResponses(updatedResponses);
+// //     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
 // //   };
 
 // //   const handleImageChange = (event, questionId) => {
-// //     const files = Array.from(event.target.files); // Get all selected files
-
-// //     setImages(prev => ({
-// //       ...prev,
-// //       [questionId]: [...(prev[questionId] || []), ...files], // Store multiple images for the question
-// //     }));
-
-// //     localStorage.setItem("auditResponses", JSON.stringify({
-// //       ...formResponses,
-// //       [`images_${questionId}`]: [...(formResponses[`images_${questionId}`] || []), ...files.map(file => file.name)]
-// //     }));
+// //     const files = Array.from(event.target.files);
+// //     setImages((prev) => ({ ...prev, [questionId]: [...(prev[questionId] || []), ...files] }));
+// //     localStorage.setItem(
+// //       "auditResponses",
+// //       JSON.stringify({
+// //         ...formResponses,
+// //         [questionId]: {
+// //           ...formResponses[questionId],
+// //           images: [...(formResponses[questionId]?.images || []), ...files.map((file) => file.name)],
+// //         },
+// //       })
+// //     );
 // //   };
 
 // //   const handleDuplicate = (questionObj) => {
 // //     const { id } = questionObj;
-
-// //     // Create a unique duplicateId for each duplicate question
-// //     const duplicateId = `${id}-duplicate-${Date.now()}`;  // Unique ID with timestamp
-
+// //     const duplicateId = `${id}-duplicate-${Date.now()}`;
 // //     setDuplicates((prev) => ({
 // //       ...prev,
-// //       [id]: [...(prev[id] || []), { ...questionObj, duplicateId }], // Assign unique duplicateId
+// //       [id]: [...(prev[id] || []), { ...questionObj, duplicateId }],
 // //     }));
 // //   };
 
-// //   const handleRemoveQuestion = (sousChapitre, questionId) => {
-// //     // Remove the original question and its duplicates
-// //     const relatedDuplicates = duplicates[questionId] || [];
-
-// //     setRemovedQuestions((prev) => ({
-// //       ...prev,
-// //       [sousChapitre]: [
-// //         ...(prev[sousChapitre] || []),
-// //         questionId, // Add the original question ID
-// //         ...relatedDuplicates.map((dup) => dup.duplicateId) // Add all related duplicate IDs
-// //       ],
-// //     }));
-
-// //     // Update the progress with the newly removed questions
-// //     updateProgress(calculateProgress(data, formResponses, {
+// //   const handleRemoveQuestion = (sousChapitre, questionId, questionTitle) => {
+// //     const updatedRemovedQuestions = {
 // //       ...removedQuestions,
 // //       [sousChapitre]: [
 // //         ...(removedQuestions[sousChapitre] || []),
-// //         questionId,
-// //         ...relatedDuplicates.map((dup) => dup.duplicateId),
+// //         { id: questionId, title: questionTitle },
 // //       ],
-// //     }));
+// //     };
+// //     setRemovedQuestions(updatedRemovedQuestions);
+// //     localStorage.setItem("removedQuestions", JSON.stringify(updatedRemovedQuestions));
 // //   };
 
 // //   const handleRemoveDuplicate = (duplicateId) => {
 // //     setDuplicates((prev) => {
 // //       const updatedDuplicates = {};
-
 // //       Object.keys(prev).forEach((questionId) => {
-// //         updatedDuplicates[questionId] = prev[questionId].filter((duplicate) => duplicate.duplicateId !== duplicateId);
-// //         if (updatedDuplicates[questionId].length === 0) {
-// //           delete updatedDuplicates[questionId];
-// //         }
+// //         updatedDuplicates[questionId] = prev[questionId].filter(
+// //           (duplicate) => duplicate.duplicateId !== duplicateId
+// //         );
+// //         if (updatedDuplicates[questionId].length === 0) delete updatedDuplicates[questionId];
 // //       });
-
 // //       return updatedDuplicates;
 // //     });
 // //   };
 
-// //   const handleReAddQuestion = (sousChapitre, questionObj) => {
-// //     setRemovedQuestions((prev) => ({
-// //       ...prev,
-// //       [sousChapitre]: prev[sousChapitre]?.filter(id => id !== questionObj.id),
-// //     }));
-// //     updateProgress(calculateProgress(data, formResponses, removedQuestions));
+// //   const handleReAddQuestion = (sousChapitre, questionId) => {
+// //     const updatedRemovedQuestions = {
+// //       ...removedQuestions,
+// //       [sousChapitre]: removedQuestions[sousChapitre].filter((item) => item.id !== questionId),
+// //     };
+// //     if (updatedRemovedQuestions[sousChapitre].length === 0) delete updatedRemovedQuestions[sousChapitre];
+// //     setRemovedQuestions(updatedRemovedQuestions);
+// //     localStorage.setItem("removedQuestions", JSON.stringify(updatedRemovedQuestions));
 // //   };
 
-// //   const handleSubmit = (event) => {
-// //     event.preventDefault();
-// //     const formData = new FormData();
-// //     formData.append('auditId', auditId);
-
-// //     Object.entries(formResponses).forEach(([questionId, response]) => {
-// //       const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
-// //       formData.append(`responses[${questionId}]`, finalResponse);
-// //     });
-
-// //     Object.entries(images).forEach(([questionId, image]) => {
-// //       if (image) {
-// //         formData.append(`images[${questionId}]`, image);
-// //       }
-// //     });
-
-// //     axios.post('/api/submit', formData, {
-// //       headers: { 'Content-Type': 'multipart/form-data' },
-// //     })
-// //     .then(() => {
-// //       alert('Audit detail submitted successfully!');
-// //       localStorage.removeItem("auditResponses");
-// //       localStorage.removeItem("auditId");
-// //     })
-// //     .catch(error => console.error('Error submitting audit detail:', error));
-// //   };
-
-// //   const toggleSousChapitre = (sousChapitre) => {
-// //     setExpandedSousChapitres(prevState => ({
-// //       ...prevState,
-// //       [sousChapitre]: !prevState[sousChapitre],
-// //     }));
-// //   };
-
-// //   const getBackgroundColor = (index) => index % 2 === 0 ? '#e1e1e1' : '#ffffff';
-
-// //   const renderQuestionComponent = (item, itemIndex, sousChapitre) => {
-// //     const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
-// //     if (!isRemoved) {
-// //       const questionKey = item.duplicateId || `original-${item.id}-${itemIndex}`; // Use index for additional uniqueness
-
-// //       return (
-// //         <div
-// //           key={questionKey}
-// //           style={{ backgroundColor: getBackgroundColor(itemIndex), marginLeft: 0 }}
-// //         >
-// //           <QuestionBaseComponent
-// //             questionObj={item}
-// //             formResponses={formResponses}
-// //             handleInputChange={handleInputChange}
-// //             handleCommentChange={handleCommentChange}
-// //             handleImageChange={handleImageChange}
-// //             isDuplicate={!!item.duplicateId}  // Mark whether the item is a duplicate
-// //             handleDuplicate={item.duplicateId ? null : handleDuplicate}
-// //             handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
-// //             setImages={setImages}
-// //             images={images}
-// //             comments={comments}
-// //           />
-// //           {/* Render image preview if available */}
-// //           {imagePreviews[item.id] && (
-// //             <div style={{ marginTop: '10px' }}>
-// //               <img
-// //                 src={imagePreviews[item.id]}
-// //                 alt="Preview"
-// //                 style={{ width: '100px', height: 'auto', border: '1px solid #ccc' }}
-// //               />
-// //             </div>
-// //           )}
-// //         </div>
-// //       );
-// //     }
-// //     return null;
-// //   };
 
 // //   return (
-// //     <div className="container">
+// //     <div className="container-fluid">
 // //       <div className="row">
 // //         <div className="col-md-3">
-// //           {/* Sidebar with data */}
-// //           {data && <Sidebar data={calculateProgress(data, formResponses, removedQuestions)} />}
+// //           {data && (
+// //             <Sidebar
+// //               data={data}
+// //               formResponses={formResponses}
+// //               removedQuestions={removedQuestions}
+// //             />
+// //           )}
 // //         </div>
-// //         <div className="col-md-9 main-content">
+// //         <div className="col-md-9">
 // //           <h2>Grilles de l'audit</h2>
-// //           <form onSubmit={handleSubmit}>
-// //             {data && Object.entries(data).map(([chapitre, sousChapitres]) => (
+// //           {data &&
+// //             Object.entries(data).map(([chapitre, sousChapitres]) => (
 // //               <div key={chapitre}>
 // //                 <h3>{chapitre}</h3>
-// //                 {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
-// //                   <div key={sousChapitre} className="mb-3" id={sousChapitre}>
+// //                 {Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
+// //                   <div key={sousChapitre} id={sousChapitre} className="mb-3">
 // //                     <h4 className="paragraphe-header">
 // //                       <button
 // //                         type="button"
 // //                         className="btn btn-link"
-// //                         onClick={() => toggleSousChapitre(sousChapitre)}
+// //                         onClick={() => setExpandedSousChapitres((prev) => ({
+// //                           ...prev,
+// //                           [sousChapitre]: !prev[sousChapitre],
+// //                         }))}
 // //                       >
 // //                         {expandedSousChapitres[sousChapitre] ? '▼' : '▶'} {sousChapitre}
 // //                       </button>
 // //                     </h4>
-// //                     {expandedSousChapitres[sousChapitre] && (
-// //                       <div>
-// //                         {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-// //                           const uniqueId = `${sousChapitre}-${paragraphe}`; // Unique ID
 
-// //                           const allQuestionsFlattened = [];
-// //                           sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
-// //                             questions.forEach((questionObj) => {
-// //                               allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
-// //                               (duplicates[questionObj.id] || []).forEach((duplicate) => {
-// //                                 allQuestionsFlattened.push({ ...duplicate, isDuplicate: true });
-// //                               });
-// //                             });
-// //                           });
-
-// //                           return (
-// //                             <div key={uniqueId} id={uniqueId} className="mb-2">
-// //                               <h5>{paragraphe}</h5>
-
-// //                               {(removedQuestions[sousChapitre] || []).length > 0 && (
-// //                                 <div className="mb-2">
-// //                                   <h6>Questions Removed:</h6>
-// //                                   <ul>
-// //                                     {allQuestionsFlattened
-// //                                       .filter(question => removedQuestions[sousChapitre].includes(question.id || question.duplicateId))
-// //                                       .map(question => (
-// //                                         <li key={question.duplicateId || `removed-${question.id}`}>
-// //                                           {question.question}
-// //                                           <button
-// //                                             type="button"
-// //                                             className="btn btn-success btn-sm ml-2"
-// //                                             onClick={() => handleReAddQuestion(sousChapitre, question)}
-// //                                           >
-// //                                             Rajouter
-// //                                           </button>
-// //                                         </li>
-// //                                       ))}
-// //                                   </ul>
-// //                                 </div>
-// //                               )}
-
-// //                               {allQuestionsFlattened.map((item, index) => (
-// //                                 renderQuestionComponent(item, index, sousChapitre)
-// //                               ))}
-// //                             </div>
-// //                           );
-// //                         })}
+// //                     {/* Removed Questions Section */}
+// //                     {removedQuestions[sousChapitre]?.length > 0 && (
+// //                       <div style={{ backgroundColor: '#f8d7da', padding: '10px', marginBottom: '10px' }}>
+// //                         <h5>Removed Questions</h5>
+// //                         {removedQuestions[sousChapitre].map((removed) => (
+// //                           <div key={removed.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+// //                             <span>{removed.title}</span>
+// //                             <button
+// //                               type="button"
+// //                               className="btn btn-link"
+// //                               onClick={() => handleReAddQuestion(sousChapitre, removed.id)}
+// //                               style={{ color: '#007bff' }}
+// //                             >
+// //                               Re-add
+// //                             </button>
+// //                           </div>
+// //                         ))}
 // //                       </div>
 // //                     )}
+
+// //                     {/* Active Questions */}
+// //                     {expandedSousChapitres[sousChapitre] &&
+// //                       Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
+// //                         <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
+// //                           <h5>{paragraphe}</h5>
+// //                           {Object.entries(sousParagraphes).map(([_, questions]) =>
+// //                             questions
+// //                               .filter((q) => !(removedQuestions[sousChapitre] || []).find((r) => r.id === q.id))
+// //                               .map((questionObj) => (
+// //                                 <QuestionComponent
+// //                                   key={questionObj.id}
+// //                                   questionObj={questionObj}
+// //                                   formResponses={formResponses}
+// //                                   handleInputChange={handleInputChange}
+// //                                   handleCommentChange={handleCommentChange}
+// //                                   handleImageChange={handleImageChange}
+// //                                   handleDuplicate={handleDuplicate}
+// //                                   handleRemove={() => handleRemoveQuestion(sousChapitre, questionObj.id, questionObj.question)}
+// //                                   comments={comments}
+// //                                   images={images}
+// //                                   setImages={setImages}
+// //                                 />
+// //                               ))
+// //                           )}
+// //                         </div>
+// //                       ))}
 // //                   </div>
 // //                 ))}
 // //               </div>
 // //             ))}
-// //             <button type="submit" className="btn btn-primary">Envoyer</button>
-// //           </form>
+// //           <button type="submit" className="btn btn-primary">Envoyer</button>
 // //         </div>
 // //       </div>
 // //     </div>
@@ -437,275 +617,211 @@
 // // export default AuditDetail;
 
 
-// import React, { useEffect, useState, useCallback } from 'react';
+// import React, { useEffect, useState } from 'react';
 // import axios from 'axios';
-// import QuestionBaseComponent from './QuestionBaseComponent';
 // import Sidebar from './Sidebar';
+// import QuestionComponent from './QuestionComponent';
+// import calculateProgress from './functions/calculateProgress';
 
 // function AuditDetail({ updateProgress }) {
 //   const [data, setData] = useState(null);
 //   const [formResponses, setFormResponses] = useState({});
 //   const [comments, setComments] = useState({});
 //   const [images, setImages] = useState({});
-//   const [imagePreviews, setImagePreviews] = useState({});
 //   const [duplicates, setDuplicates] = useState({});
 //   const [removedQuestions, setRemovedQuestions] = useState({});
 //   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
-//   const [auditId, setAuditId] = useState(null);
 
-//   // Define calculateProgress function
-//   const calculateProgress = useCallback((auditData = {}, responses = {}, removedQuestions = {}) => {
-//     let progressData = {};
-//     Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
-//       Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
-//         let sousChapitreTotalQuestions = 0;
-//         let sousChapitreAnsweredQuestions = 0;
-//         let paragrapheProgressData = {};
+//   // Call updateProgress in useEffect when dependencies change
+//   useEffect(() => {
+//     if (data) {
+//       updateProgress(calculateProgress(data, formResponses, removedQuestions, duplicates));
+//     }
+//   }, [data, formResponses, removedQuestions, duplicates, updateProgress]);
 
-//         Object.entries(paragraphes || {}).forEach(([paragraphe, sousParagraphes = {}]) => {
-//           let paragrapheTotalQuestions = 0;
-//           let paragrapheAnsweredQuestions = 0;
-
-//           Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
-//             const activeQuestions = questions.filter(
-//               (question) => !(removedQuestions[sousChapitre] || []).includes(question.id)
-//             );
-
-//             paragrapheTotalQuestions += activeQuestions.length;
-
-//             activeQuestions.forEach((question) => {
-//               if (responses[question.id]?.response) {
-//                 paragrapheAnsweredQuestions += 1;
-//               }
-
-//               const duplicateQuestions = duplicates[question.id] || [];
-//               const activeDuplicates = duplicateQuestions.filter(
-//                 (duplicate) => !(removedQuestions[sousChapitre] || []).includes(duplicate.duplicateId)
-//               );
-
-//               paragrapheTotalQuestions += activeDuplicates.length;
-
-//               activeDuplicates.forEach((duplicate) => {
-//                 if (responses[duplicate.duplicateId]?.response) {
-//                   paragrapheAnsweredQuestions += 1;
-//                 }
-//               });
-//             });
-//           });
-
-//           const paragraphePercentageComplete = paragrapheTotalQuestions > 0
-//             ? Math.round((paragrapheAnsweredQuestions / paragrapheTotalQuestions) * 100)
-//             : 0;
-
-//           sousChapitreTotalQuestions += paragrapheTotalQuestions;
-//           sousChapitreAnsweredQuestions += paragrapheAnsweredQuestions;
-
-//           paragrapheProgressData[paragraphe] = {
-//             percentage: paragraphePercentageComplete,
-//             totalQuestions: paragrapheTotalQuestions,
-//             answeredQuestions: paragrapheAnsweredQuestions,
-//           };
-//         });
-
-//         const sousChapitrePercentageComplete = sousChapitreTotalQuestions > 0
-//           ? Math.round((sousChapitreAnsweredQuestions / sousChapitreTotalQuestions) * 100)
-//           : 0;
-
-//         progressData[sousChapitre] = {
-//           percentage: sousChapitrePercentageComplete,
-//           totalQuestions: sousChapitreTotalQuestions,
-//           answeredQuestions: sousChapitreAnsweredQuestions,
-//           paragraphes: paragrapheProgressData,
-//         };
-//       });
-//     });
-
-//     return progressData;
-//   }, [duplicates]);
-
-//   // Fetch data
 //   useEffect(() => {
 //     const fetchData = async () => {
 //       try {
 //         const response = await axios.get('/api/audit_detail');
 //         setData(response.data);
 //         const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
-//         const storedAuditId = localStorage.getItem("auditId");
+//         const storedRemovedQuestions = JSON.parse(localStorage.getItem("removedQuestions")) || {};
 
-//         if (storedResponses) {
-//           setFormResponses(storedResponses);
-//         }
-
-//         if (storedAuditId) {
-//           setAuditId(storedAuditId);
-//         } else {
-//           const newAuditId = Date.now().toString();
-//           setAuditId(newAuditId);
-//           localStorage.setItem("auditId", newAuditId);
-//         }
-
-//         updateProgress(calculateProgress(response.data, storedResponses, removedQuestions));
+//         if (storedResponses) setFormResponses(storedResponses);
+//         setRemovedQuestions(storedRemovedQuestions);
 //       } catch (error) {
 //         console.error('Error fetching data:', error);
 //       }
 //     };
-
 //     fetchData();
-//   }, [calculateProgress, updateProgress, removedQuestions]);
+//   }, []);
 
-//   // Submit handler
-//   const handleSubmit = (event) => {
-//     event.preventDefault();
-//     const formData = new FormData();
-//     formData.append('auditId', auditId);
-
-//     Object.entries(formResponses).forEach(([questionId, response]) => {
-//       const finalResponse = typeof response === 'object' ? JSON.stringify(response) : response;
-//       formData.append(`responses[${questionId}]`, finalResponse);
-//     });
-
-//     Object.entries(images).forEach(([questionId, image]) => {
-//       if (image) {
-//         formData.append(`images[${questionId}]`, image);
-//       }
-//     });
-
-//     axios.post('/api/submit', formData, {
-//       headers: { 'Content-Type': 'multipart/form-data' },
-//     })
-//     .then(() => {
-//       alert('Audit detail submitted successfully!');
-//       localStorage.removeItem("auditResponses");
-//       localStorage.removeItem("auditId");
-//     })
-//     .catch(error => console.error('Error submitting audit detail:', error));
+//   const handleInputChange = (event, questionId) => {
+//     const { value } = event.target;
+//     const updatedResponses = {
+//       ...formResponses,
+//       [questionId]: { ...formResponses[questionId], response: value },
+//     };
+//     setFormResponses(updatedResponses);
+//     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
 //   };
 
-//   // Toggle visibility of sousChapitre
-//   const toggleSousChapitre = (sousChapitre) => {
-//     setExpandedSousChapitres(prevState => ({
-//       ...prevState,
-//       [sousChapitre]: !prevState[sousChapitre],
+//   const handleDuplicate = (questionObj) => {
+//     const { id } = questionObj;
+//     const duplicateId = `${id}-duplicate-${Date.now()}`;
+//     setDuplicates((prev) => ({
+//       ...prev,
+//       [id]: [...(prev[id] || []), { ...questionObj, duplicateId }],
 //     }));
 //   };
 
-//   // Render each question component
-//   const renderQuestionComponent = (item, itemIndex, sousChapitre) => {
-//     const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
-//     if (!isRemoved) {
-//       const questionKey = item.duplicateId || `original-${item.id}-${itemIndex}`;
+//   const handleRemoveDuplicate = (duplicateId) => {
+//     setDuplicates((prev) => {
+//       const updatedDuplicates = {};
+//       Object.keys(prev).forEach((questionId) => {
+//         updatedDuplicates[questionId] = prev[questionId].filter(
+//           (duplicate) => duplicate.duplicateId !== duplicateId
+//         );
+//         if (updatedDuplicates[questionId].length === 0) delete updatedDuplicates[questionId];
+//       });
+//       return updatedDuplicates;
+//     });
+//   };
 
-//       return (
-//         <div
-//           key={questionKey}
-//           style={{ backgroundColor: itemIndex % 2 === 0 ? '#e1e1e1' : '#ffffff', marginLeft: 0 }}
-//         >
-//           <QuestionBaseComponent
-//             questionObj={item}
-//             formResponses={formResponses}
-//             handleInputChange={handleInputChange}
-//             handleCommentChange={handleCommentChange}
-//             handleImageChange={handleImageChange}
-//             isDuplicate={!!item.duplicateId}
-//             handleDuplicate={item.duplicateId ? null : handleDuplicate}
-//             handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
-//             setImages={setImages}
-//             images={images}
-//             comments={comments}
-//           />
-//           {imagePreviews[item.id] && (
-//             <div style={{ marginTop: '10px' }}>
-//               <img
-//                 src={imagePreviews[item.id]}
-//                 alt="Preview"
-//                 style={{ width: '100px', height: 'auto', border: '1px solid #ccc' }}
-//               />
-//             </div>
-//           )}
-//         </div>
-//       );
-//     }
-//     return null;
+
+//   const handleCommentChange = (event, questionId) => {
+//     const { value } = event.target;
+//     setComments((prev) => ({ ...prev, [questionId]: value }));
+//     const updatedResponses = {
+//       ...formResponses,
+//       [questionId]: {
+//         ...formResponses[questionId],
+//         comment: value,
+//         response: formResponses[questionId]?.response || '',
+//       },
+//     };
+//     setFormResponses(updatedResponses);
+//     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+//   };
+
+//   const handleImageChange = (event, questionId) => {
+//     const files = Array.from(event.target.files);
+//     setImages((prev) => ({ ...prev, [questionId]: [...(prev[questionId] || []), ...files] }));
+//     localStorage.setItem(
+//       "auditResponses",
+//       JSON.stringify({
+//         ...formResponses,
+//         [questionId]: {
+//           ...formResponses[questionId],
+//           images: [...(formResponses[questionId]?.images || []), ...files.map((file) => file.name)],
+//         },
+//       })
+//     );
+//   };
+
+
+//   const handleRemoveQuestion = (sousChapitre, questionId, questionTitle) => {
+//     const updatedRemovedQuestions = {
+//       ...removedQuestions,
+//       [sousChapitre]: [
+//         ...(removedQuestions[sousChapitre] || []),
+//         { id: questionId, title: questionTitle },
+//       ],
+//     };
+//     setRemovedQuestions(updatedRemovedQuestions);
+//     localStorage.setItem("removedQuestions", JSON.stringify(updatedRemovedQuestions));
+//   };
+
+//   const handleReAddQuestion = (sousChapitre, questionId) => {
+//     const updatedRemovedQuestions = {
+//       ...removedQuestions,
+//       [sousChapitre]: removedQuestions[sousChapitre].filter((item) => item.id !== questionId),
+//     };
+//     if (updatedRemovedQuestions[sousChapitre].length === 0) delete updatedRemovedQuestions[sousChapitre];
+//     setRemovedQuestions(updatedRemovedQuestions);
+//     localStorage.setItem("removedQuestions", JSON.stringify(updatedRemovedQuestions));
 //   };
 
 //   return (
-//     <div className="container">
+//     <div className="container-fluid">
 //       <div className="row">
 //         <div className="col-md-3">
-//           {data && <Sidebar data={calculateProgress(data, formResponses, removedQuestions)} />}
+//           {data && (
+//             <Sidebar
+//               data={data}
+//               formResponses={formResponses}
+//               removedQuestions={removedQuestions}
+//               duplicates={duplicates}
+//             />
+//           )}
 //         </div>
-//         <div className="col-md-9 main-content">
+//         <div className="col-md-9">
 //           <h2>Grilles de l'audit</h2>
-//           <form onSubmit={handleSubmit}>
-//             {data && Object.entries(data).map(([chapitre, sousChapitres]) => (
+//           {data &&
+//             Object.entries(data).map(([chapitre, sousChapitres]) => (
 //               <div key={chapitre}>
 //                 <h3>{chapitre}</h3>
-//                 {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
-//                   <div key={sousChapitre} className="mb-3" id={sousChapitre}>
+//                 {Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
+//                   <div key={sousChapitre} id={sousChapitre} className="mb-3">
 //                     <h4 className="paragraphe-header">
 //                       <button
 //                         type="button"
 //                         className="btn btn-link"
-//                         onClick={() => toggleSousChapitre(sousChapitre)}
+//                         onClick={() =>
+//                           setExpandedSousChapitres((prev) => ({
+//                             ...prev,
+//                             [sousChapitre]: !prev[sousChapitre],
+//                           }))
+//                         }
 //                       >
 //                         {expandedSousChapitres[sousChapitre] ? '▼' : '▶'} {sousChapitre}
 //                       </button>
 //                     </h4>
-//                     {expandedSousChapitres[sousChapitre] && (
-//                       <div>
-//                         {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-//                           const uniqueId = `${sousChapitre}-${paragraphe}`;
-//                           const allQuestionsFlattened = [];
 
-//                           sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
-//                             questions.forEach((questionObj) => {
-//                               allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
-//                               (duplicates[questionObj.id] || []).forEach((duplicate) => {
-//                                 allQuestionsFlattened.push({ ...duplicate, isDuplicate: true });
-//                               });
-//                             });
-//                           });
-
-//                           return (
-//                             <div key={uniqueId} id={uniqueId} className="mb-2">
-//                               <h5>{paragraphe}</h5>
-
-//                               {(removedQuestions[sousChapitre] || []).length > 0 && (
-//                                 <div className="mb-2">
-//                                   <h6>Questions Removed:</h6>
-//                                   <ul>
-//                                     {allQuestionsFlattened
-//                                       .filter(question => removedQuestions[sousChapitre].includes(question.id || question.duplicateId))
-//                                       .map(question => (
-//                                         <li key={question.duplicateId || `removed-${question.id}`}>
-//                                           {question.question}
-//                                           <button
-//                                             type="button"
-//                                             className="btn btn-success btn-sm ml-2"
-//                                             onClick={() => handleReAddQuestion(sousChapitre, question)}
-//                                           >
-//                                             Rajouter
-//                                           </button>
-//                                         </li>
-//                                       ))}
-//                                   </ul>
-//                                 </div>
-//                               )}
-
-//                               {allQuestionsFlattened.map((item, index) => (
-//                                 renderQuestionComponent(item, index, sousChapitre)
-//                               ))}
-//                             </div>
-//                           );
-//                         })}
-//                       </div>
-//                     )}
+//                     {expandedSousChapitres[sousChapitre] &&
+//                       Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
+//                         <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
+//                           <h5>{paragraphe}</h5>
+//                           {Object.entries(sousParagraphes).map(([_, questions]) =>
+//                             questions
+//                               .filter((q) => !(removedQuestions[sousChapitre] || []).find((r) => r.id === q.id))
+//                               .map((questionObj) => (
+//                                 <React.Fragment key={questionObj.id}>
+//                                   <QuestionComponent
+//                                     questionObj={questionObj}
+//                                     formResponses={formResponses}
+//                                     handleInputChange={handleInputChange}
+//                                     handleDuplicate={handleDuplicate}
+//                                     handleRemove={() =>
+//                                       handleRemoveQuestion(sousChapitre, questionObj.id, questionObj.question)
+//                                     }
+//                                     comments={comments}
+//                                     images={images}
+//                                     setImages={setImages}
+//                                   />
+//                                   {duplicates[questionObj.id]?.map((duplicate) => (
+//                                     <QuestionComponent
+//                                       key={duplicate.duplicateId}
+//                                       questionObj={duplicate}
+//                                       formResponses={formResponses}
+//                                       handleInputChange={handleInputChange}
+//                                       handleDuplicate={handleDuplicate}
+//                                       handleRemove={() => handleRemoveDuplicate(duplicate.duplicateId)}
+//                                       comments={comments}
+//                                       images={images}
+//                                       setImages={setImages}
+//                                     />
+//                                   ))}
+//                                 </React.Fragment>
+//                               ))
+//                           )}
+//                         </div>
+//                       ))}
 //                   </div>
 //                 ))}
 //               </div>
 //             ))}
-//             <button type="submit" className="btn btn-primary">Envoyer</button>
-//           </form>
+//           <button type="submit" className="btn btn-primary">Envoyer</button>
 //         </div>
 //       </div>
 //     </div>
@@ -715,97 +831,20 @@
 // export default AuditDetail;
 
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import QuestionBaseComponent from './QuestionBaseComponent';
 import Sidebar from './Sidebar';
+import QuestionComponent from './QuestionComponent';
+import calculateProgress from './functions/calculateProgress';
 
 function AuditDetail({ updateProgress }) {
   const [data, setData] = useState(null);
   const [formResponses, setFormResponses] = useState({});
   const [comments, setComments] = useState({});
   const [images, setImages] = useState({});
-  const [imagePreviews, setImagePreviews] = useState({});
   const [duplicates, setDuplicates] = useState({});
   const [removedQuestions, setRemovedQuestions] = useState({});
   const [expandedSousChapitres, setExpandedSousChapitres] = useState({});
-  const [auditId, setAuditId] = useState(null);
-
-  const calculateProgress = useCallback((auditData = {}, responses = {}, removedQuestions = {}) => {
-    let progressData = {};
-    Object.entries(auditData || {}).forEach(([chapitre, sousChapitres = {}]) => {
-      Object.entries(sousChapitres || {}).forEach(([sousChapitre, paragraphes = {}]) => {
-        let sousChapitreTotalQuestions = 0;
-        let sousChapitreAnsweredQuestions = 0;
-        let paragrapheProgressData = {};
-
-        Object.entries(paragraphes || {}).forEach(([paragraphe, sousParagraphes = {}]) => {
-          let paragrapheTotalQuestions = 0;
-          let paragrapheAnsweredQuestions = 0;
-
-          Object.entries(sousParagraphes || {}).forEach(([_, questions = []]) => {
-            const activeQuestions = questions.filter(
-              (question) => !(removedQuestions[sousChapitre] || []).includes(question.id)
-            );
-
-            paragrapheTotalQuestions += activeQuestions.length;
-
-            activeQuestions.forEach((question) => {
-              if (responses[question.id]?.response) {
-                paragrapheAnsweredQuestions += 1;
-              }
-
-              const duplicateQuestions = duplicates[question.id] || [];
-              const activeDuplicates = duplicateQuestions.filter(
-                (duplicate) => !(removedQuestions[sousChapitre] || []).includes(duplicate.duplicateId)
-              );
-
-              paragrapheTotalQuestions += activeDuplicates.length;
-
-              activeDuplicates.forEach((duplicate) => {
-                if (responses[duplicate.duplicateId]?.response) {
-                  paragrapheAnsweredQuestions += 1;
-                }
-              });
-            });
-          });
-
-          const paragraphePercentageComplete = paragrapheTotalQuestions > 0
-            ? Math.round((paragrapheAnsweredQuestions / paragrapheTotalQuestions) * 100)
-            : 0;
-
-          sousChapitreTotalQuestions += paragrapheTotalQuestions;
-          sousChapitreAnsweredQuestions += paragrapheAnsweredQuestions;
-
-          paragrapheProgressData[paragraphe] = {
-            percentage: paragraphePercentageComplete,
-            totalQuestions: paragrapheTotalQuestions,
-            answeredQuestions: paragrapheAnsweredQuestions,
-          };
-        });
-
-        const sousChapitrePercentageComplete = sousChapitreTotalQuestions > 0
-          ? Math.round((sousChapitreAnsweredQuestions / sousChapitreTotalQuestions) * 100)
-          : 0;
-
-        progressData[sousChapitre] = {
-          percentage: sousChapitrePercentageComplete,
-          totalQuestions: sousChapitreTotalQuestions,
-          answeredQuestions: sousChapitreAnsweredQuestions,
-          paragraphes: paragrapheProgressData,
-        };
-      });
-    });
-
-    return progressData;
-  }, [duplicates]);
-
-  useEffect(() => {
-    if (data) {
-      const updatedProgress = calculateProgress(data, formResponses, removedQuestions);
-      updateProgress(updatedProgress);
-    }
-  }, [data, formResponses, duplicates, removedQuestions, updateProgress, calculateProgress]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -813,30 +852,49 @@ function AuditDetail({ updateProgress }) {
         const response = await axios.get('/api/audit_detail');
         setData(response.data);
         const storedResponses = JSON.parse(localStorage.getItem("auditResponses"));
-        const storedAuditId = localStorage.getItem("auditId");
+        const storedRemovedQuestions = JSON.parse(localStorage.getItem("removedQuestions")) || {};
 
-        if (storedResponses) {
-          setFormResponses(storedResponses);
-        }
-
-        if (storedAuditId) {
-          setAuditId(storedAuditId);
-        } else {
-          const newAuditId = Date.now().toString();
-          setAuditId(newAuditId);
-          localStorage.setItem("auditId", newAuditId);
-        }
-
-        updateProgress(calculateProgress(response.data, storedResponses, removedQuestions));
+        if (storedResponses) setFormResponses(storedResponses);
+        setRemovedQuestions(storedRemovedQuestions);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-
     fetchData();
-  }, [calculateProgress, updateProgress, removedQuestions]);
+  }, []);
 
-  const handleInputChange = (event, questionId) => {
+  const handleDuplicate = (questionObj) => {
+    const { id } = questionObj;
+    const duplicateId = `${id}-duplicate-${Date.now()}`;
+
+    setDuplicates((prev) => ({
+      ...prev,
+      [id]: [...(prev[id] || []), { ...questionObj, duplicateId }],
+    }));
+  };
+
+  // Update progress when duplicates, formResponses, or removedQuestions change
+  useEffect(() => {
+    if (data) {
+      const progress = calculateProgress(data, formResponses, removedQuestions, duplicates);
+      updateProgress(progress);
+    }
+  }, [data, formResponses, removedQuestions, duplicates, updateProgress]);
+
+  const handleRemoveDuplicate = (duplicateId) => {
+    setDuplicates((prev) => {
+      const updatedDuplicates = {};
+      Object.keys(prev).forEach((questionId) => {
+        updatedDuplicates[questionId] = prev[questionId].filter(
+          (duplicate) => duplicate.duplicateId !== duplicateId
+        );
+        if (updatedDuplicates[questionId].length === 0) delete updatedDuplicates[questionId];
+      });
+      return updatedDuplicates;
+    });
+  };
+
+    const handleInputChange = (event, questionId) => {
     const { value } = event.target;
     const updatedResponses = {
       ...formResponses,
@@ -844,252 +902,160 @@ function AuditDetail({ updateProgress }) {
     };
     setFormResponses(updatedResponses);
     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
-    updateProgress(calculateProgress(data, updatedResponses, removedQuestions));
   };
-
   const handleCommentChange = (event, questionId) => {
     const { value } = event.target;
-
-    // Update the comments state (if needed for UI purposes)
-    setComments(prev => ({
-      ...prev,
-      [questionId]: value,
-    }));
-
-    // Update the formResponses to include the comment as part of the response object
+    setComments((prev) => ({ ...prev, [questionId]: value }));
     const updatedResponses = {
       ...formResponses,
       [questionId]: {
         ...formResponses[questionId],
-        comment: value,  // Ensure the comment is part of the response object
-        response: formResponses[questionId]?.response || ''  // Preserve existing response if present
-      }
+        comment: value,
+        response: formResponses[questionId]?.response || '',
+      },
     };
-
-    // Save the updated formResponses to state and localStorage
     setFormResponses(updatedResponses);
     localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
-};
+  };
 
   const handleImageChange = (event, questionId) => {
-    const files = Array.from(event.target.files); // Get all selected files
-
-    setImages(prev => ({
-      ...prev,
-      [questionId]: [...(prev[questionId] || []), ...files], // Store multiple images for the question
-    }));
-
-    // Update the local storage to store image names
-    localStorage.setItem("auditResponses", JSON.stringify({
-      ...formResponses,
-      [questionId]: {
-        ...formResponses[questionId],
-        images: [...(formResponses[questionId]?.images || []), ...files.map(file => file.name)]
-      }
-    }));
+    const files = Array.from(event.target.files);
+    setImages((prev) => ({ ...prev, [questionId]: [...(prev[questionId] || []), ...files] }));
+    localStorage.setItem(
+      "auditResponses",
+      JSON.stringify({
+        ...formResponses,
+        [questionId]: {
+          ...formResponses[questionId],
+          images: [...(formResponses[questionId]?.images || []), ...files.map((file) => file.name)],
+        },
+      })
+    );
   };
 
-  const handleDuplicate = (questionObj) => {
-    const { id } = questionObj;
 
-    // Create a unique duplicateId for each duplicate question
-    const duplicateId = `${id}-duplicate-${Date.now()}`;  // Unique ID with timestamp
+  const handleRemoveQuestion = (sousChapitre, questionObj) => {
+    const questionId = questionObj.id || questionObj.duplicateId;
 
-    setDuplicates((prev) => ({
-      ...prev,
-      [id]: [...(prev[id] || []), { ...questionObj, duplicateId }], // Assign unique duplicateId
-    }));
-  };
-
-  const handleRemoveQuestion = (sousChapitre, questionId) => {
-    // Remove the original question and its duplicates
-    const relatedDuplicates = duplicates[questionId] || [];
-
-    setRemovedQuestions((prev) => ({
-      ...prev,
-      [sousChapitre]: [
-        ...(prev[sousChapitre] || []),
-        questionId, // Add the original question ID
-        ...relatedDuplicates.map((dup) => dup.duplicateId) // Add all related duplicate IDs
-      ],
-    }));
-
-    // Update the progress with the newly removed questions
-    updateProgress(calculateProgress(data, formResponses, {
-      ...removedQuestions,
-      [sousChapitre]: [
-        ...(removedQuestions[sousChapitre] || []),
-        questionId,
-        ...relatedDuplicates.map((dup) => dup.duplicateId),
-      ],
-    }));
-  };
-
-  const handleRemoveDuplicate = (duplicateId) => {
-    setDuplicates((prev) => {
-      const updatedDuplicates = {};
-
-      Object.keys(prev).forEach((questionId) => {
-        updatedDuplicates[questionId] = prev[questionId].filter((duplicate) => duplicate.duplicateId !== duplicateId);
-        if (updatedDuplicates[questionId].length === 0) {
-          delete updatedDuplicates[questionId];
-        }
+    if (questionObj.duplicateId) {
+      // For duplicates
+      setDuplicates((prev) => {
+        const updatedDuplicates = { ...prev };
+        updatedDuplicates[questionObj.id] = updatedDuplicates[questionObj.id].filter(
+          (duplicate) => duplicate.duplicateId !== questionObj.duplicateId
+        );
+        if (updatedDuplicates[questionObj.id].length === 0) delete updatedDuplicates[questionObj.id];
+        return updatedDuplicates;
       });
+    } else {
+      // For original questions
+      setRemovedQuestions((prev) => ({
+        ...prev,
+        [sousChapitre]: [
+          ...(prev[sousChapitre] || []),
+          { id: questionId, title: questionObj.question },
+        ],
+      }));
+    }
 
-      return updatedDuplicates;
-    });
+    // Recalculate and update progress
+    updateProgress(calculateProgress(data, formResponses, removedQuestions, duplicates));
+    localStorage.setItem("removedQuestions", JSON.stringify(removedQuestions));
   };
 
-  const handleReAddQuestion = (sousChapitre, questionObj) => {
+  // Function to re-add an original question
+  const handleReAddQuestion = (sousChapitre, questionId) => {
     setRemovedQuestions((prev) => ({
       ...prev,
-      [sousChapitre]: prev[sousChapitre]?.filter(id => id !== questionObj.id),
+      [sousChapitre]: prev[sousChapitre].filter((item) => item.id !== questionId),
     }));
-    updateProgress(calculateProgress(data, formResponses, removedQuestions));
+    updateProgress(calculateProgress(data, formResponses, removedQuestions, duplicates));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const formData = new FormData();
-    formData.append('auditId', auditId);
-
-    // Loop through formResponses to add responses and comments to the FormData
-    Object.entries(formResponses).forEach(([questionId, responseObj]) => {
-        // Store the response in the 'response' column
-        if (responseObj?.response) {
-            const finalResponse = typeof responseObj.response === 'object' ? JSON.stringify(responseObj.response) : responseObj.response;
-            formData.append(`responses[${questionId}]`, finalResponse);
-        }
-
-        // Store the comment in the 'comment' column
-        if (responseObj?.comment) {
-            formData.append(`comments[${questionId}]`, responseObj.comment);
-        }
-    });
-
-    // Loop through images and add them to the formData
-    Object.entries(images).forEach(([questionId, imageList]) => {
-        imageList.forEach((image) => {
-            formData.append(`images[${questionId}][]`, image); // Using array syntax [] to store multiple images
-        });
-    });
-
-    // Submit the form
-    axios.post('/api/submit', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    .then(() => {
-        alert('Audit detail submitted successfully!');
-        localStorage.removeItem("auditResponses");
-        localStorage.removeItem("auditId");
-    })
-    .catch(error => console.error('Error submitting audit detail:', error));
-};
-
-  const toggleSousChapitre = (sousChapitre) => {
-    setExpandedSousChapitres(prevState => ({
-      ...prevState,
-      [sousChapitre]: !prevState[sousChapitre],
-    }));
-  };
-
-  const renderQuestionComponent = (item, itemIndex, sousChapitre) => {
-    const isRemoved = (removedQuestions[sousChapitre] || []).includes(item.id || item.duplicateId);
-    if (!isRemoved) {
-      const questionKey = item.duplicateId || `original-${item.id}-${itemIndex}`; // Use index for additional uniqueness
-
-      return (
-        <div
-          key={questionKey}
-          style={{ backgroundColor: itemIndex % 2 === 0 ? '#e1e1e1' : '#ffffff', marginLeft: 0 }}
-        >
-          <QuestionBaseComponent
-            questionObj={item}
-            formResponses={formResponses}
-            handleInputChange={handleInputChange}
-            handleCommentChange={handleCommentChange}
-            handleImageChange={handleImageChange}
-            isDuplicate={!!item.duplicateId}  // Mark whether the item is a duplicate
-            handleDuplicate={item.duplicateId ? null : handleDuplicate}
-            handleRemove={item.duplicateId ? () => handleRemoveDuplicate(item.duplicateId) : () => handleRemoveQuestion(sousChapitre, item.id)}
-            setImages={setImages}
-            images={images}
-            comments={comments}
-          />
-          {/* Render image preview if available */}
-          {imagePreviews[item.id] && (
-            <div style={{ marginTop: '10px' }}>
-              <img
-                src={imagePreviews[item.id]}
-                alt="Preview"
-                style={{ width: '100px', height: 'auto', border: '1px solid #ccc' }}
-              />
-            </div>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="container-fluid">
       <div className="row">
-        {/* Sidebar column */}
         <div className="col-md-3">
-          {data && <Sidebar data={calculateProgress(data, formResponses, removedQuestions)} />}
+          {data && (
+            <Sidebar
+              data={data}
+              formResponses={formResponses}
+              removedQuestions={removedQuestions}
+              duplicates={duplicates} // Pass duplicates to Sidebar
+            />
+          )}
         </div>
-
-        {/* Main content column */}
         <div className="col-md-9">
           <h2>Grilles de l'audit</h2>
-          <form onSubmit={handleSubmit}>
-            {data && Object.entries(data).map(([chapitre, sousChapitres]) => (
+          {data &&
+            Object.entries(data).map(([chapitre, sousChapitres]) => (
               <div key={chapitre}>
                 <h3>{chapitre}</h3>
-                {sousChapitres && Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
-                  <div key={sousChapitre} className="mb-3" id={sousChapitre}>
+                {Object.entries(sousChapitres).map(([sousChapitre, paragraphes]) => (
+                  <div key={sousChapitre} id={sousChapitre} className="mb-3">
                     <h4 className="paragraphe-header">
                       <button
                         type="button"
                         className="btn btn-link"
-                        onClick={() => toggleSousChapitre(sousChapitre)}
+                        onClick={() =>
+                          setExpandedSousChapitres((prev) => ({
+                            ...prev,
+                            [sousChapitre]: !prev[sousChapitre],
+                          }))
+                        }
                       >
                         {expandedSousChapitres[sousChapitre] ? '▼' : '▶'} {sousChapitre}
                       </button>
                     </h4>
-                    {expandedSousChapitres[sousChapitre] && (
-                      <div>
-                        {paragraphes && Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => {
-                          const uniqueId = `${sousChapitre}-${paragraphe}`; // Unique ID
 
-                          const allQuestionsFlattened = [];
-                          sousParagraphes && Object.entries(sousParagraphes).forEach(([_, questions]) => {
-                            questions.forEach((questionObj) => {
-                              allQuestionsFlattened.push({ ...questionObj, isDuplicate: false });
-                              (duplicates[questionObj.id] || []).forEach((duplicate) => {
-                                allQuestionsFlattened.push({ ...duplicate, isDuplicate: true });
-                              });
-                            });
-                          });
+                    {expandedSousChapitres[sousChapitre] &&
+                      Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
+                        <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
+                          <h5>{paragraphe}</h5>
+                          {Object.entries(sousParagraphes).map(([_, questions]) =>
+                            questions
+                              .filter((q) => !(removedQuestions[sousChapitre] || []).find((r) => r.id === q.id))
+                              .map((questionObj) => (
+                                <React.Fragment key={questionObj.id}>
+                                  <QuestionComponent
+                                    questionObj={questionObj}
+                                    handleRemove={() => handleRemoveQuestion(sousChapitre, questionObj)}
+                                    formResponses={formResponses}
+                                    handleInputChange={handleInputChange}
+                                    handleCommentChange={handleCommentChange}
+                                    handleImageChange={handleImageChange}
+                                    handleDuplicate={handleDuplicate}
+                                    comments={comments}
+                                    images={images}
+                                    setImages={setImages}
+                                  />
 
-                          return (
-                            <div key={uniqueId} id={uniqueId} className="mb-2">
-                              <h5>{paragraphe}</h5>
-                              {allQuestionsFlattened.map((item, index) => (
-                                renderQuestionComponent(item, index, sousChapitre)
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                                  {duplicates[questionObj.id]?.map((duplicate) => (
+                                    <QuestionComponent
+                                      key={duplicate.duplicateId}
+                                      questionObj={duplicate}
+                                      handleRemove={() => handleRemoveDuplicate(duplicate.duplicateId)} // Pass specific removal for duplicates
+                                      formResponses={formResponses}
+                                      handleInputChange={handleInputChange}
+                                      handleCommentChange={handleCommentChange}
+                                      handleImageChange={handleImageChange}
+                                      handleDuplicate={handleDuplicate}
+                                      comments={comments}
+                                      images={images}
+                                      setImages={setImages}
+                                    />
+                                  ))}
+                                </React.Fragment>
+                              ))
+                          )}
+                        </div>
+                      ))}
                   </div>
                 ))}
               </div>
             ))}
-            <button type="submit" className="btn btn-primary">Envoyer</button>
-          </form>
+          <button type="submit" className="btn btn-primary">Envoyer</button>
         </div>
       </div>
     </div>

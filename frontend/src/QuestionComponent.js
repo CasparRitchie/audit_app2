@@ -8,6 +8,7 @@ function QuestionComponent({
   handleCommentChange,
   handleImageChange,
   handleDuplicate,
+  handleRemove,  // Important: pass down handleRemove correctly
   comments,
   images,
 }) {
@@ -18,9 +19,8 @@ function QuestionComponent({
       handleInputChange={handleInputChange}
       handleCommentChange={handleCommentChange}
       handleImageChange={handleImageChange}
-      isDuplicate={false} // Not a duplicate
       handleDuplicate={handleDuplicate}
-      handleRemove={null} // Original questions handled differently in AuditDetail
+      handleRemove={handleRemove}  // Ensure handleRemove is correctly passed down
       comments={comments}
       images={images}
     />
