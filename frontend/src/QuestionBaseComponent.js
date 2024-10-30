@@ -213,21 +213,33 @@ function QuestionBaseComponent({
   };
 
   // Handle removing an image
-  const handleRemoveImage = () => {
-    const updatedImages = Array.from(images[questionId]).filter(
+  // Handle removing an image
+const handleRemoveImage = () => {
+  if (!setImages) {
+    console.error("setImages function is not provided.");
+    return;
+  }
+
+  const updatedImages = (images[questionId] || []).filter(
       (file) => file !== selectedImage
     );
+
+    // Update the images state
     setImages((prevImages) => ({
       ...prevImages,
       [questionId]: updatedImages,
     }));
-    localStorage.setItem(
-      "auditResponses",
-      JSON.stringify({
-        ...formResponses,
-        [`image_${questionId}`]: updatedImages,
-      })
-    );
+
+    // Update local storage
+    const updatedResponses = {
+      ...formResponses,
+      [questionId]: {
+        ...formResponses[questionId],
+        images: updatedImages.map((file) => file.name),
+      },
+    };
+    localStorage.setItem("auditResponses", JSON.stringify(updatedResponses));
+
     setSelectedImage(null);
   };
 

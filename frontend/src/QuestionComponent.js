@@ -11,6 +11,8 @@ function QuestionComponent({
   handleRemove,  // Important: pass down handleRemove correctly
   comments,
   images,
+  setImages,
+
 }) {
   return (
     <QuestionBaseComponent
@@ -20,9 +22,11 @@ function QuestionComponent({
       handleCommentChange={handleCommentChange}
       handleImageChange={handleImageChange}
       handleDuplicate={handleDuplicate}
-      handleRemove={handleRemove}  // Ensure handleRemove is correctly passed down
+      handleRemove={handleRemove}
       comments={comments}
       images={images}
+      setImages={setImages}
+
     />
   );
 }
