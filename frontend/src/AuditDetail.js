@@ -965,10 +965,13 @@ function AuditDetail({ updateProgress }) {
 
   // Function to re-add an original question
   const handleReAddQuestion = (sousChapitre, questionId) => {
-    setRemovedQuestions((prev) => ({
-      ...prev,
-      [sousChapitre]: prev[sousChapitre].filter((item) => item.id !== questionId),
-    }));
+    setRemovedQuestions((prev) => {
+      const updated = { ...prev };
+      updated[sousChapitre] = updated[sousChapitre].filter((q) => q.id !== questionId);
+      if (updated[sousChapitre].length === 0) delete updated[sousChapitre];
+      return updated;
+    });
+
     updateProgress(calculateProgress(data, formResponses, removedQuestions, duplicates));
   };
 
@@ -982,7 +985,7 @@ function AuditDetail({ updateProgress }) {
               data={data}
               formResponses={formResponses}
               removedQuestions={removedQuestions}
-              duplicates={duplicates} // Pass duplicates to Sidebar
+              duplicates={duplicates}
             />
           )}
         </div>
@@ -1009,6 +1012,27 @@ function AuditDetail({ updateProgress }) {
                       </button>
                     </h4>
 
+                    {/* Removed Questions Section */}
+                    {removedQuestions[sousChapitre]?.length > 0 && (
+                      <div style={{ backgroundColor: '#f8d7da', padding: '10px', marginBottom: '10px' }}>
+                        <h5>Removed Questions</h5>
+                        {removedQuestions[sousChapitre].map((removed) => (
+                          <div key={removed.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{removed.title}</span>
+                            <button
+                              type="button"
+                              className="btn btn-link"
+                              onClick={() => handleReAddQuestion(sousChapitre, removed.id)}
+                              style={{ color: '#007bff' }}
+                            >
+                              Re-add
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Active Questions */}
                     {expandedSousChapitres[sousChapitre] &&
                       Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
                         <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
@@ -1020,7 +1044,7 @@ function AuditDetail({ updateProgress }) {
                                 <React.Fragment key={questionObj.id}>
                                   <QuestionComponent
                                     questionObj={questionObj}
-                                    handleRemove={() => handleRemoveQuestion(sousChapitre, questionObj)}
+                                    handleRemove={(q) => handleRemoveQuestion(sousChapitre, q)}
                                     formResponses={formResponses}
                                     handleInputChange={handleInputChange}
                                     handleCommentChange={handleCommentChange}
@@ -1030,17 +1054,16 @@ function AuditDetail({ updateProgress }) {
                                     images={images}
                                     setImages={setImages}
                                   />
-
                                   {duplicates[questionObj.id]?.map((duplicate) => (
                                     <QuestionComponent
                                       key={duplicate.duplicateId}
                                       questionObj={duplicate}
-                                      handleRemove={() => handleRemoveDuplicate(duplicate.duplicateId)} // Pass specific removal for duplicates
                                       formResponses={formResponses}
                                       handleInputChange={handleInputChange}
                                       handleCommentChange={handleCommentChange}
                                       handleImageChange={handleImageChange}
                                       handleDuplicate={handleDuplicate}
+                                      handleRemove={() => handleRemoveDuplicate(duplicate.duplicateId)}
                                       comments={comments}
                                       images={images}
                                       setImages={setImages}
