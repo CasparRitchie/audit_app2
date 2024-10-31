@@ -270,7 +270,7 @@ const handleRemoveImage = () => {
 
       {/* Response Input Field */}
       <div className="flex-item response-field" style={{ flexBasis: '15%', flexShrink: 0 }}>
-        {questionObj.response_type === 'Temperature' ? (
+        {questionObj.response_type === 'Temperature'|| questionObj.response_type === 'Cold Temperature' ? (
           <input
             type="number"
             value={responseValue}

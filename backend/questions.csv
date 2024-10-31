@@ -6,7 +6,7 @@ id,chapitre,sous_chapitre,paragraphe,sous_paragraphe,question,response_type,incl
 5,Les hors d'œuvre,Les hors d'œuvre dressés,Présentation,Présentation,Qualité de la présentation,C/PC/NC,1,
 6,Les hors d'œuvre,Les hors d'œuvre dressés,Présentation,Présentation,Uniformité de la vaisselle utilisée,C/PC/NC,1,
 7,Les hors d'œuvre,Les hors d'œuvre dressés,Présentation,Présentation,Accessibilité pour le réapprovisionnement,OK/KO,1,
-8,Les hors d'œuvre,Les hors d'œuvre dressés,Relevés des températures,Relevés des températures,Produit 1,Temperature,1,
+8,Les hors d'œuvre,Les hors d'œuvre dressés,Relevés des températures,Relevés des températures,Produit 1,Cold Temperature,1,
 9,Les hors d'œuvre,Les hors d'œuvre dressés,Relevés des températures,Relevés des températures,Vérification de la température de la vitrine,Temperature,1,
 10,Les hors d'œuvre,Les hors d'œuvre dressés,Relevés des températures,Relevés des températures,Contrôle de l'affichage de la vitrine,C/PC/NC,1,
 11,Les hors d'œuvre,Les hors d'œuvre dressés,Les contenants,Les contenants,Uniformité de la vaisselle utilisée,C/PC/NC,1,

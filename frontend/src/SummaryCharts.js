@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData }) {
+function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData, coldtemperatureData }) {
   const [isLoading, setIsLoading] = useState(true);
   const [cpcncChartUrl, setCpcncChartUrl] = useState(null);
   const [okkoChartUrl, setOkkoChartUrl] = useState(null);
   const [temperatureChartUrl, setTemperatureChartUrl] = useState(null);
+  const [coldtemperatureChartUrl, setColdTemperatureChartUrl] = useState(null);
   const [imageQueue, setImageQueue] = useState([]); // Image loading queue to ensure proper order
 
   // Function to clear and prepare images to be loaded
@@ -12,6 +13,7 @@ function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData }) {
     setCpcncChartUrl(null);
     setOkkoChartUrl(null);
     setTemperatureChartUrl(null);
+    setColdTemperatureChartUrl(null);
     setImageQueue([]); // Clear queue before loading
     setIsLoading(true);
   };
@@ -37,6 +39,13 @@ function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData }) {
       newQueue.push({
         url: `/api/chart/temperature/${temperatureData.over63}/${temperatureData.under63}?t=${timestamp}`,
         setter: setTemperatureChartUrl,
+      });
+    }
+
+    if (coldtemperatureData && (coldtemperatureData.over10 || coldtemperatureData.under10)) {
+      newQueue.push({
+        url: `/api/chart/cold_temperature/${coldtemperatureData.over10}/${coldtemperatureData.under10}?t=${timestamp}`,
+        setter: setColdTemperatureChartUrl,
       });
     }
 
@@ -85,12 +94,12 @@ function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData }) {
   };
 
   useEffect(() => {
-    if (cpcncData && okkoData && temperatureData) {
+    if (cpcncData && okkoData && temperatureData && coldtemperatureData) {
       // Clear and reload images whenever new data is received
       clearImages();
       loadChartsSequentially();
     }
-  }, [auditId, cpcncData, okkoData, temperatureData]);
+  }, [auditId, cpcncData, okkoData, temperatureData, coldtemperatureData]);
 
   // Chart rendering data
   const chartRenderers = {
@@ -108,6 +117,11 @@ function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData }) {
       labels: ['>= 63°C', '< 63°C'],
       values: [temperatureData.over63, temperatureData.under63],
       chartUrl: temperatureChartUrl,
+    },
+    'Cold Temperature Proportion': {
+      labels: ['>= 10°C', '< 10°C'],
+      values: [coldtemperatureData.over10, coldtemperatureData.under10],
+      chartUrl: coldtemperatureChartUrl,
     },
   };
 

@@ -109,13 +109,25 @@ def update_env_file(key, value):
     set_key(env_file_path, key, value)
 
 
-# Function to load a CSV file from Dropbox
-def load_csv_from_dropbox(file_path):
+# # Function to load a CSV file from Dropbox
+# def load_csv_from_dropbox(file_path):
+#     dbx = get_dropbox_client()
+#     try:
+#         _, res = dbx.files_download(file_path)
+#         data = io.BytesIO(res.content)
+#         df = pd.read_csv(data, sep=';')
+#         return df
+#     except dropbox.exceptions.ApiError as e:
+#         logging.error(f"Dropbox API error: {e}")
+#         return pd.DataFrame()  # Return an empty DataFrame if file doesn't exist
+
+def load_csv_from_dropbox(file_path, header_row=0):
     dbx = get_dropbox_client()
     try:
         _, res = dbx.files_download(file_path)
         data = io.BytesIO(res.content)
-        df = pd.read_csv(data)
+        # Use the specified header row
+        df = pd.read_csv(data, sep=';', header=header_row)
         return df
     except dropbox.exceptions.ApiError as e:
         logging.error(f"Dropbox API error: {e}")
@@ -134,12 +146,22 @@ def save_csv_to_dropbox(df, file_path):
 
 
 def load_header_data():
-    # Download the CSV from Dropbox
-    df = load_csv_from_dropbox(HEADER_CSV_PATH)
+    # Download the CSV with the second row as headers for Audit Header
+    df = load_csv_from_dropbox(HEADER_CSV_PATH, header_row=0)
 
-    # Convert NaN to None
+    # Log the initial DataFrame to inspect its structure
+    logging.info(f"Loaded header data from CSV:\n{df.head()}")
+
+    # Check if 'id', 'question', 'type', and 'default_value' columns exist
+    required_columns = {'id', 'question', 'type', 'default_value'}
+    if not required_columns.issubset(df.columns):
+        logging.error(f"Missing columns in CSV. Expected columns: {required_columns}, but got: {df.columns}")
+        return []
+
+    # Process rows, replacing NaN with None, and log each row
     header_data = []
     for _, row in df.iterrows():
+        logging.info(f"Processing row: {row.to_dict()}")
         header_data.append({
             "id": row['id'],
             "question": row['question'],
@@ -147,7 +169,39 @@ def load_header_data():
             # Replace NaN with None (which translates to null in JSON)
             "default_value": None if pd.isna(row.get('default_value')) else str(row.get('default_value', ''))
         })
+
     return header_data
+
+
+def load_audit_header_csv(file_path):
+    dbx = get_dropbox_client()
+    try:
+        _, res = dbx.files_download(file_path)
+        data = io.BytesIO(res.content)
+
+        # Read the CSV with semicolon delimiter and explicit header
+        df = pd.read_csv(data, sep=';', header=None, encoding='utf-8')
+
+        # Drop any extraneous columns
+        df = df[['id', 'question', 'type', 'default_value']]
+
+        # Check and log the loaded column names
+        logging.info(f"Loaded columns from CSV: {df.columns}")
+
+        # Ensure columns are as expected
+        required_columns = {'id', 'question', 'type', 'default_value'}
+        if not required_columns.issubset(df.columns):
+            logging.error(f"Missing columns in Audit Header CSV. Expected columns: {required_columns}, but got: {df.columns}")
+            return pd.DataFrame()
+
+        # Convert NaN to None for JSON compatibility
+        df = df.where(pd.notnull(df), None)
+        logging.info(f"Loaded header data from CSV:\n{df.head()}")
+        return df
+
+    except dropbox.exceptions.ApiError as e:
+        logging.error(f"Dropbox API error: {e}")
+        return pd.DataFrame()
 
 
 # Load audit detail data (questions.csv)
@@ -196,13 +250,11 @@ def serve_react_app(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 
-
 # API route to fetch audit header data
 @app.route('/api/audit_header', methods=['GET'])
 def get_audit_header():
     header_data = load_header_data()
     return jsonify(header_data)
-
 
 # API route to fetch audit detail data
 @app.route('/api/audit_detail', methods=['GET'])
@@ -212,7 +264,7 @@ def get_audit_detail():
 
 
 # API route to submit form responses and save to responses.csv
-@app.route('/api/submit', methods=['POST'])
+@app.route('/api/submit_audit', methods=['POST'])
 def submit_responses():
     try:
         data = request.form  # Form data
@@ -268,7 +320,6 @@ def submit_responses():
     except Exception as e:
         logging.error(f"Error in submit_responses: {e}")
         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
-
 
 
 # API to get all audits
@@ -438,6 +489,24 @@ def get_okko_chart(ok_count, ko_count):
 @app.route('/api/chart/temperature/<int:over63>/<int:under63>', methods=['GET'])
 def get_temperature_chart(over63, under63):
     sizes = [over63, under63]
+    colors = ['#28a745', '#dc3545']
+    explode = (0.1, 0)  # only "explode" the OK slice (slightly pull out)
+
+    plt.figure(figsize=(6, 6))
+    plt.pie(sizes, explode=explode, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
+    plt.axis('equal')
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plt.close()
+
+    return send_file(img, mimetype='image/png')
+
+
+@app.route('/api/chart/cold_temperature/<int:over10>/<int:under10>', methods=['GET'])
+def get_cold_temperature_chart(over10, under10):
+    sizes = [over10, under10]
     colors = ['#28a745', '#dc3545']
     explode = (0.1, 0)  # only "explode" the OK slice (slightly pull out)
 

@@ -170,3 +170,23 @@ root {
 .sidebar ul li:first-child {
   margin-top: 15px; /* Adjust this value as needed */
 }
+
+/* 
+.sidebar {
+  position: sticky;
+  top: 20px;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-right: 1px solid #ddd;
+} */
+
+.sticky-title {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 2;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}

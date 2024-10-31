@@ -35,11 +35,27 @@ export const calculateTemperature = (questions) => {
   return counts;
 };
 
+export const calculateColdTemperature = (questions) => {
+  const counts = { over10: 0, under10: 0 };
+  questions.forEach((q) => {
+    const response = parseFloat(q.response); // Directly access the response as a number
+    if (!isNaN(response)) {
+      if (response >= 10) {
+        counts.over10++;
+      } else {
+        counts.under10++;
+      }
+    }
+  });
+  return counts;
+};
+
 // New function to combine all calculations
 export const calculateResponseCounts = (questions) => {
   return {
     ...calculateCPCNC(questions),
     ...calculateOKKO(questions),
     ...calculateTemperature(questions),
+    ...calculateColdTemperature(questions),
   };
 };

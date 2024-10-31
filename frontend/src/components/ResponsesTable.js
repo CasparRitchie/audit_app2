@@ -41,6 +41,14 @@ function ResponsesTable({ sousParagraphe, responseCounts }) {
             <td style={{ border: '1px solid black', padding: '5px' }}>&lt; 63°C</td>
             <td style={{ border: '1px solid black', padding: '5px' }}>{responseCounts.under63}</td>
           </tr>
+          <tr>
+            <td style={{ border: '1px solid black', padding: '5px' }}>&ge; 10°C</td>
+            <td style={{ border: '1px solid black', padding: '5px' }}>{responseCounts.over10}</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid black', padding: '5px' }}>&lt; 10°C</td>
+            <td style={{ border: '1px solid black', padding: '5px' }}>{responseCounts.under10}</td>
+          </tr>
         </tbody>
       </table>
     </div>

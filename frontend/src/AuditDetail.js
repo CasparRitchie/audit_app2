@@ -978,8 +978,31 @@ function AuditDetail({ updateProgress }) {
     updateProgress(calculateProgress(data, formResponses, removedQuestions, duplicates));
   };
 
+  const handleSubmit = (event) => {
+    event.preventDefault(); // Prevents page reload on form submit
+
+    const submissionData = {
+      formResponses,
+      comments,
+      images,
+      // Add any other data you want to send
+    };
+
+    // Perform API call or form submission logic here
+    axios.post('/api/submit_audit', submissionData)
+      .then(response => {
+        console.log('Form submitted successfully:', response.data);
+        alert('Audit successfully submitted!'); // Provide feedback to the user
+      })
+      .catch(error => {
+        console.error('There was an error submitting the form:', error);
+        alert('An error occurred while submitting the audit. Please try again.');
+      });
+  };
 
   return (
+    <form onSubmit={handleSubmit}>
+
     <div className="container-fluid">
       <div className="row">
         <div className="col-md-3">
@@ -1038,8 +1061,9 @@ function AuditDetail({ updateProgress }) {
                     {/* Active Questions with Alternating Colors */}
                     {expandedSousChapitres[sousChapitre] &&
                       Object.entries(paragraphes).map(([paragraphe, sousParagraphes]) => (
-                        <div key={`${sousChapitre}-${paragraphe}`} className="mb-2">
-                          <h5>{paragraphe}</h5>
+                        <div key={`${sousChapitre}-${paragraphe}`} className="mb-2" id={`${sousChapitre}-${paragraphe}`} style={{ paddingTop: '60px' }}>
+                          <h5 className="sticky-title">{paragraphe}</h5>
+                          {/* Render questions with alternating colors */}
                           {Object.entries(sousParagraphes).map(([_, questions]) => {
                             const combinedQuestions = questions
                               .filter((q) => !(removedQuestions[sousChapitre] || []).find((r) => r.id === q.id))
@@ -1049,7 +1073,6 @@ function AuditDetail({ updateProgress }) {
                                 return acc.concat(questionDuplicates);
                               }, []);
 
-                            // Render combined list with alternating colors
                             return combinedQuestions.map((questionObj, index) => (
                               <div key={questionObj.duplicateId || questionObj.id} style={{ backgroundColor: getRowColor(index) }}>
                                 <QuestionComponent
@@ -1077,6 +1100,7 @@ function AuditDetail({ updateProgress }) {
         </div>
       </div>
     </div>
+    </form>
   );
 }
 
