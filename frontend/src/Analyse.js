@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SummaryCharts from './SummaryCharts';
 import RenderAuditDetailsWithResponses from './components/CombinedComponent';
-import { calculateCPCNC, calculateOKKO, calculateTemperature } from './functions/calculateResponses';
+import { calculateCPCNC, calculateOKKO, calculateTemperature, calculateColdTemperature} from './functions/calculateResponses';
 
 import './Analyse.css';
 
@@ -45,6 +45,7 @@ function Analyse() {
         cpcncData={calculateCPCNC(filteredAudits)}
         okkoData={calculateOKKO(filteredAudits)}
         temperatureData={calculateTemperature(filteredAudits)}
+        coldtemperatureData={calculateColdTemperature(filteredAudits)}
       />
       <RenderAuditDetailsWithResponses auditDetail={auditDetail} filteredAudits={filteredAudits} />
     </>

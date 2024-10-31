@@ -109,25 +109,13 @@ def update_env_file(key, value):
     set_key(env_file_path, key, value)
 
 
-# # Function to load a CSV file from Dropbox
-# def load_csv_from_dropbox(file_path):
-#     dbx = get_dropbox_client()
-#     try:
-#         _, res = dbx.files_download(file_path)
-#         data = io.BytesIO(res.content)
-#         df = pd.read_csv(data, sep=';')
-#         return df
-#     except dropbox.exceptions.ApiError as e:
-#         logging.error(f"Dropbox API error: {e}")
-#         return pd.DataFrame()  # Return an empty DataFrame if file doesn't exist
-
 def load_csv_from_dropbox(file_path, header_row=0):
     dbx = get_dropbox_client()
     try:
         _, res = dbx.files_download(file_path)
         data = io.BytesIO(res.content)
         # Use the specified header row
-        df = pd.read_csv(data, sep=';', header=header_row)
+        df = pd.read_csv(data, header=header_row)
         return df
     except dropbox.exceptions.ApiError as e:
         logging.error(f"Dropbox API error: {e}")
@@ -137,7 +125,33 @@ def load_csv_from_dropbox(file_path, header_row=0):
 # Function to save a DataFrame to a CSV file in Dropbox
 def save_csv_to_dropbox(df, file_path):
     dbx = get_dropbox_client()
-    csv_data = df.to_csv(index=False)
+
+    # Load existing data from Dropbox, if it exists
+    try:
+        existing_df = load_csv_from_dropbox(file_path)
+        logging.info(f"Existing data loaded from Dropbox:\n{existing_df}")
+
+        # Rename columns to match expected structure and strip whitespace
+        existing_df.columns = [col.strip() for col in df.columns]  # Strip and align columns
+        logging.info(f"Existing data after renaming columns:\n{existing_df}")
+
+        # Drop any rows that are completely empty
+        existing_df = existing_df.dropna(how="all")
+        logging.info(f"Existing data after dropping empty rows:\n{existing_df}")
+
+        # Concatenate existing and new data
+        combined_df = pd.concat([existing_df, df], ignore_index=True)
+        logging.info(f"Data after concatenation:\n{combined_df}")
+    except Exception as e:
+        logging.info("No existing file found or error loading existing file. Using new data only.")
+        # If file does not exist or there's an error, proceed with new data only
+        combined_df = df.dropna(how="all")  # Drop any all-NaN rows in new data
+
+    # Log final data before saving to Dropbox
+    logging.info(f"Final data to be saved to Dropbox:\n{combined_df}")
+
+    # Convert combined DataFrame to CSV format and upload without duplicates
+    csv_data = combined_df.to_csv(index=False)
     try:
         dbx.files_upload(csv_data.encode(), file_path, mode=dropbox.files.WriteMode('overwrite'))
         logging.info(f"Saved CSV to {file_path} on Dropbox")
@@ -250,11 +264,18 @@ def serve_react_app(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 
-# API route to fetch audit header data
 @app.route('/api/audit_header', methods=['GET'])
 def get_audit_header():
+    summary_only = request.args.get('summary', 'false').lower() == 'true'
     header_data = load_header_data()
+
+    if summary_only:
+        # Return only 'id' and 'question' columns for summary
+        header_summary = [{"id": item["id"], "question": item["question"]} for item in header_data]
+        return jsonify(header_summary)
+
     return jsonify(header_data)
+
 
 # API route to fetch audit detail data
 @app.route('/api/audit_detail', methods=['GET'])
@@ -263,16 +284,22 @@ def get_audit_detail():
     return jsonify(detail_data)
 
 
-# API route to submit form responses and save to responses.csv
 @app.route('/api/submit_audit', methods=['POST'])
 def submit_responses():
     try:
-        data = request.form  # Form data
-        files = request.files  # Uploaded files
+        # Retrieve form data and log for debugging
+        data = request.form
+        files = request.files
+        logging.info(f"Form data received: {data}")
 
-        audit_id = data.get('auditId')  # Retrieve the audit ID
+        audit_id = data.get('auditId')
+        if not audit_id:
+            logging.error("Missing auditId in form data.")
+            return jsonify({"status": "error", "message": "Audit ID is missing"}), 400
+
+        logging.info(f"Received audit submission with ID: {audit_id}")
+
         new_data = []
-        audit_header_responses = []
 
         # Process form responses
         for question, response in data.items():
@@ -282,7 +309,7 @@ def submit_responses():
                 comment = data.get(f'comments[{q_key}]', '')
                 image_list = []
 
-                # Handle image file saving to Dropbox
+                # Handle image uploads
                 if f'images[{q_key}][]' in files:
                     images = request.files.getlist(f'images[{q_key}][]')
                     for image in images:
@@ -291,31 +318,91 @@ def submit_responses():
                         dbx = get_dropbox_client()
                         dbx.files_upload(image.read(), image_path, mode=dropbox.files.WriteMode('overwrite'))
                         image_list.append(image_path)
+                        logging.info(f"Uploaded image {image_filename} to Dropbox at {image_path}")
+
+                # Append data to new_data list
+                new_data.append({
+                    "auditId": audit_id,
+                    "question": q_key,
+                    "response": response_value,
+                    "comment": comment,
+                    "image_path": json.dumps(image_list)
+                })
+
+        if not new_data:
+            logging.error("No valid responses processed; check form field names in frontend.")
+            return jsonify({"status": "error", "message": "No responses to save"}), 400
+
+        # Convert new_data to DataFrame
+        df_new = pd.DataFrame(new_data)
+        logging.info(f"New data to be saved:\n{df_new}")
+
+        # Load and save to Dropbox as before
+        # (Existing code for loading/saving CSV here)
+
+    except Exception as e:
+        logging.error(f"Error in submit_responses: {e}")
+        return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
+
+
+@app.route('/api/submit', methods=['POST'])
+def submit_audit_responses():
+    try:
+        # Retrieve form data and log for debugging
+        data = request.form
+        files = request.files
+        logging.info(f"Form data received: {data}")
+
+        audit_id = data.get('auditId')
+        if not audit_id:
+            logging.error("Missing auditId in form data.")
+            return jsonify({"status": "error", "message": "Audit ID is missing"}), 400
+
+        logging.info(f"Received audit submission with ID: {audit_id}")
+
+        new_data = []
+
+        # Process form responses
+        for question, response in data.items():
+            if question.startswith("header"):
+                q_key = question.split("[")[1][:-1]
+                response_value = response
+                comment = data.get(f'comments[{q_key}]', '')
+                image_list = []
+
+                # Handle image uploads if needed
+                if f'images[{q_key}][]' in files:
+                    images = request.files.getlist(f'images[{q_key}][]')
+                    for image in images:
+                        image_filename = secure_filename(image.filename)
+                        image_path = f"{UPLOAD_FOLDER}/{image_filename}"
+                        dbx = get_dropbox_client()
+                        dbx.files_upload(image.read(), image_path, mode=dropbox.files.WriteMode('overwrite'))
+                        image_list.append(image_path)
+                        logging.info(f"Uploaded image {image_filename} to Dropbox at {image_path}")
 
                 new_data.append({
                     "auditId": audit_id,
                     "question": q_key,
                     "response": response_value,
                     "comment": comment,
-                    "image_path": json.dumps(image_list)  # Save the image paths
+                    "image_path": json.dumps(image_list)
                 })
 
-        # Convert the new_data to a DataFrame and append or update the responses CSV
+        if not new_data:
+            logging.error("No valid responses processed; check form field names in frontend.")
+            return jsonify({"status": "error", "message": "No responses to save"}), 400
+
+        # Convert new_data to DataFrame and define consistent columns
         df_new = pd.DataFrame(new_data)
+        expected_columns = ["auditId", "question", "response", "comment", "image_path"]
+        df_new = df_new.reindex(columns=expected_columns)
+        logging.info(f"New data to be saved:\n{df_new}")
 
-        # Load existing responses from Dropbox
-        df_existing = load_csv_from_dropbox(RESPONSES_CSV_PATH)
+        # Save the new data to Dropbox, appending to existing data if present
+        save_csv_to_dropbox(df_new, RESPONSES_AUDIT_HEADER_CSV_PATH)
 
-        # If audit ID exists, update; else append the new data
-        if not df_existing.empty and audit_id in df_existing.get('auditId', []):
-            df_existing.update(df_new)
-        else:
-            df_existing = pd.concat([df_existing, df_new], ignore_index=True)
-
-        # Save the updated DataFrame back to Dropbox
-        save_csv_to_dropbox(df_existing, RESPONSES_CSV_PATH)
-
-        return jsonify({"status": "success", "message": "Responses saved to Dropbox"})
+        return jsonify({"status": "success", "message": "Audit header saved successfully"})
 
     except Exception as e:
         logging.error(f"Error in submit_responses: {e}")
