@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 export const createChart = async (responseCounts, sousParagrapheKey, chartType, setCharts) => {
-  const { C, PC, NC, OK, KO, over63, under63 } = responseCounts;
+  const { C, PC, NC, OK, KO, over63, under63, over10, under10 } = responseCounts;
   let url = '';
 
   if (chartType === 'CPCNC' && (C || PC || NC)) {
@@ -11,6 +11,8 @@ export const createChart = async (responseCounts, sousParagrapheKey, chartType, 
     url = `/api/chart/okko/${OK}/${KO}`;
   } else if (chartType === 'Temperature' && (over63 || under63)) {
     url = `/api/chart/temperature/${over63}/${under63}`;
+  } else if (chartType === 'Cold Temperature' && (over63 || under63)) {
+    url = `/api/chart/coldtemperature/${over10}/${under10}`;
   }
 
   if (!url) {
