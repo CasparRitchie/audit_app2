@@ -328,6 +328,7 @@ def get_audit_detail():
 
 # Modify the function handling submission of audit details
 @app.route('/api/submit_audit', methods=['POST'])
+@app.route('/api/submit_audit', methods=['POST'])
 def submit_audit():
     form_data = request.get_json()
     audit_header_id = form_data.get("auditId")
@@ -340,19 +341,19 @@ def submit_audit():
     # Generate a unique auditDetailId for this set of responses
     audit_detail_id = str(uuid.uuid4())  # e.g., 'a1b2c3d4-e5f6-7890-gh12-ijkl3456mnop'
 
-    # Convert responses to a DataFrame for easier manipulation
+    # Prepare data to save, treating `details` as the response string
     data_to_save = []
-    for question, details in responses.items():
+    for question, response_value in responses.items():
         data_to_save.append({
             "auditId": audit_header_id,
             "auditDetailId": audit_detail_id,  # New unique detail ID
             "question": question,
-            "response": details.get("response"),
-            "comment": details.get("comment", ""),
-            "image_path": details.get("images", [])
+            "response": response_value,  # Treat details as the response string
+            "comment": "",  # Set comment as empty if not available
+            "image_path": "[]"  # Set image_path as empty if not available
         })
 
-    # Load the existing CSV file, append new data, and save it back to Dropbox
+    # Load existing CSV, append the new data, and save to Dropbox
     try:
         existing_data = load_csv_from_dropbox(RESPONSES_CSV_PATH)
         df_new_data = pd.DataFrame(data_to_save)
