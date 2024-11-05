@@ -326,43 +326,77 @@ def get_audit_detail():
     return jsonify(detail_data)
 
 
-# Modify the function handling submission of audit details
-@app.route('/api/submit_audit', methods=['POST'])
+# Function handling submission of audit details
 @app.route('/api/submit_audit', methods=['POST'])
 def submit_audit():
-    form_data = request.get_json()
-    audit_header_id = form_data.get("auditId")
-    responses = form_data.get("responses", {})
+    logging.info("Starting audit submission process.")
 
-    if not audit_header_id or not responses:
-        logging.error("Missing audit HEADER ID or responses in form data.")
-        return jsonify({"error": "Missing audit HEADER ID or responses"}), 400
+    # Extract audit ID
+    audit_header_id = request.form.get("auditId")
+    if not audit_header_id:
+        logging.error("Audit ID is missing in the form data.")
+        return jsonify({"error": "Audit ID is missing"}), 400
+    logging.info(f"Audit ID received: {audit_header_id}")
 
-    # Generate a unique auditDetailId for this set of responses
-    audit_detail_id = str(uuid.uuid4())  # e.g., 'a1b2c3d4-e5f6-7890-gh12-ijkl3456mnop'
+    # Extract responses and comments
+    responses = json.loads(request.form.get("responses", "{}"))
+    comments = json.loads(request.form.get("comments", "{}"))
+    logging.info(f"Responses received: {responses}")
+    logging.info(f"Comments received: {comments}")
 
-    # Prepare data to save, treating `details` as the response string
+    # Log all file keys for images
+    logging.info(f"Received file keys: {list(request.files.keys())}")
+
+    # Generate a unique auditDetailID for this submission
+    audit_detail_id = str(uuid.uuid4())
+    logging.info(f"Generated auditDetailID: {audit_detail_id}")
+
+    # Initialize data structure for CSV
     data_to_save = []
-    for question, response_value in responses.items():
-        data_to_save.append({
-            "auditId": audit_header_id,
-            "auditDetailId": audit_detail_id,  # New unique detail ID
-            "question": question,
-            "response": response_value,  # Treat details as the response string
-            "comment": "",  # Set comment as empty if not available
-            "image_path": "[]"  # Set image_path as empty if not available
-        })
 
-    # Load existing CSV, append the new data, and save to Dropbox
+    # Process each question response
+    for question_id, response_value in responses.items():
+        comment_value = comments.get(question_id, "")
+        image_paths = []  # To store paths of uploaded images
+
+        # Retrieve images with the format `images[question_id][]`
+        images = request.files.getlist(f"images[{question_id}][]")
+        logging.info(f"Number of images received for question {question_id}: {len(images)}")
+
+        for image in images:
+            if image.filename:
+                filename = secure_filename(image.filename)
+                dropbox_path = f"/uploads/{filename}"
+                try:
+                    dbx = get_dropbox_client()
+                    dbx.files_upload(image.read(), dropbox_path, mode=dropbox.files.WriteMode('overwrite'))
+                    image_paths.append(dropbox_path)
+                    logging.info(f"Image {filename} uploaded successfully to {dropbox_path}")
+                except Exception as e:
+                    logging.error(f"Failed to upload image {filename}: {e}")
+
+        # Append data for this question to save to CSV
+        data_entry = {
+            "auditId": audit_header_id,
+            "auditDetailId": audit_detail_id,
+            "question": question_id,
+            "response": response_value,
+            "comment": comment_value,
+            "image_path": json.dumps(image_paths)  # Store image paths as JSON string
+        }
+        data_to_save.append(data_entry)
+        logging.info(f"Data for question {question_id} added to save list: {data_entry}")
+
+    # Save data to CSV
     try:
         existing_data = load_csv_from_dropbox(RESPONSES_CSV_PATH)
         df_new_data = pd.DataFrame(data_to_save)
         df_combined = pd.concat([existing_data, df_new_data], ignore_index=True)
         save_csv_to_dropbox(df_combined, RESPONSES_CSV_PATH)
-        logging.info("Audit details saved successfully.")
+        logging.info("Audit details with images and comments saved successfully to CSV.")
         return jsonify({"message": "Audit details submitted successfully"}), 200
     except Exception as e:
-        logging.error(f"Failed to save audit details: {e}")
+        logging.error(f"Failed to save audit details to CSV: {e}")
         return jsonify({"error": "Failed to save audit details"}), 500
 
 
@@ -430,65 +464,6 @@ def submit_audit_responses():
         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
 
 
-# API to get all audits
-# @app.route('/api/get_audits', methods=['GET'])
-# def get_audits():
-#     # Load the CSV file from Dropbox
-#     df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
-
-#     # Log the initial state of the DataFrame
-#     logging.info("DataFrame loaded in get_audits:")
-#     logging.info(f"Columns: {df.columns}")
-#     logging.info(f"Head:\n{df.head()}")
-
-#     # Check if the DataFrame is not empty and contains the required columns
-#     required_columns = {'auditId', 'question', 'response', 'comment', 'image_path'}
-#     if not required_columns.issubset(df.columns):
-#         logging.error(f"DataFrame is missing required columns. Expected: {required_columns}, Found: {df.columns}")
-#         return jsonify({"error": "Missing columns in audit data"}), 500
-
-#     # Drop duplicates and log the resulting DataFrame
-#     try:
-#         audits = df[['auditId', 'question', 'response', 'comment', 'image_path']].drop_duplicates()
-#         logging.info("DataFrame after selecting required columns and dropping duplicates:")
-#         logging.info(f"Columns: {audits.columns}")
-#         logging.info(f"Head:\n{audits.head()}")
-
-#         # Convert the result to a dictionary and return as JSON
-#         audits_dict = audits.to_dict(orient='records')
-#         return jsonify(audits_dict)
-
-#     except Exception as e:
-#         logging.error(f"Error processing DataFrame in get_audits: {e}")
-#         return jsonify({"error": "Failed to process audit data"}), 500
-
-import pandas as pd
-
-# @app.route('/api/get_audits', methods=['GET'])
-# def get_audits():
-#     df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
-#     logging.info("DataFrame loaded in get_audits:")
-#     logging.info(f"Columns: {df.columns}")
-#     logging.info(f"Head:\n{df.head()}")
-
-#     required_columns = {'auditId', 'question', 'response', 'comment', 'image_path'}
-#     if not required_columns.issubset(df.columns):
-#         logging.error(f"DataFrame is missing required columns. Expected: {required_columns}, Found: {df.columns}")
-#         return jsonify({"error": "Missing columns in audit data"}), 500
-
-#     try:
-#         # Replace NaN in 'comment' column with None
-#         df['comment'] = df['comment'].replace({pd.NA: None})
-#         audits = df[['auditId', 'question', 'response', 'comment', 'image_path']].drop_duplicates()
-#         audits_dict = audits.to_dict(orient='records')
-#         logging.info("Audits data to be returned as JSON:")
-#         logging.info(audits_dict)
-#         return jsonify(audits_dict)
-#     except Exception as e:
-#         logging.error(f"Error processing DataFrame in get_audits: {e}")
-#         return jsonify({"error": "Failed to process audit data"}), 500
-
-
 @app.route('/api/get_audits', methods=['GET'])
 def get_audits():
     df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
@@ -535,6 +510,32 @@ def get_audit(audit_id):
     else:
         return jsonify({"error": "No audits found"}), 404
 
+
+from flask import request, jsonify
+from werkzeug.utils import secure_filename
+
+@app.route('/api/upload_image', methods=['POST'])
+def upload_image():
+    """Upload a single image to the Dropbox uploads folder."""
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+
+    image = request.files['image']
+    if image.filename == '':
+        return jsonify({"error": "No image selected"}), 400
+
+    filename = secure_filename(image.filename)
+    dropbox_path = f"/uploads/{filename}"
+
+    try:
+        # Upload the image to Dropbox
+        dbx = get_dropbox_client()
+        dbx.files_upload(image.read(), dropbox_path, mode=dropbox.files.WriteMode('overwrite'))
+        logging.info(f"Image {filename} uploaded successfully to {dropbox_path}")
+        return jsonify({"message": "Image uploaded successfully", "path": dropbox_path}), 200
+    except Exception as e:
+        logging.error(f"Failed to upload image {filename}: {e}")
+        return jsonify({"error": "Failed to upload image"}), 500
 
 # Clear environment variables and .env entries
 def clear_tokens():

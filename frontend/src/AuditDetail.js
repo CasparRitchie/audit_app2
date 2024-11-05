@@ -502,49 +502,69 @@ function AuditDetail({ updateProgress }) {
   //     });
   // };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+//   const handleSubmit = (event) => {
+//     event.preventDefault();
 
-    // Create a structured format for submissionData where each response, comment, and image list is separate
-    const submissionData = {
-      auditId: selectedAuditHeaderId,
-      responses: {}, // This will store individual responses by question ID
-      comments: {},  // Comments associated with each question
-      images: {}     // Images associated with each question
-    };
+//     const formData = new FormData();
+//     formData.append("auditId", selectedAuditHeaderId);
 
-    // Iterate over formResponses to organize responses by question ID
-    for (const questionId in formResponses) {
-        submissionData.responses[questionId] = formResponses[questionId].response || '';
-    }
+//     // Serialize responses and comments as JSON strings
+//     formData.append("responses", JSON.stringify(formResponses));
+//     formData.append("comments", JSON.stringify(comments));
 
-    // Organize comments by question ID
-    for (const questionId in comments) {
-        submissionData.comments[questionId] = comments[questionId] || '';
-    }
+//     // Append each image file for each question
+//     for (const questionId in images) {
+//         images[questionId].forEach((file) => {
+//             console.log(`Appending image for ${questionId}:`, file.name);
+//             formData.append(`images[${questionId}][]`, file);
+//         });
+//     }
 
-    // Organize images by question ID, assuming images are an array of filenames
-    for (const questionId in images) {
-        submissionData.images[questionId] = images[questionId].map((file) => file.name) || [];
-    }
+//     axios.post('/api/submit_audit', formData, {
+//         headers: { 'Content-Type': 'multipart/form-data' }
+//     })
+//     .then(response => {
+//         console.log('Form submitted successfully:', response.data);
+//         alert('Audit successfully submitted!');
+//     })
+//     .catch(error => {
+//         console.error('There was an error submitting the form:', error);
+//         alert('An error occurred while submitting the audit. Please try again.');
+//     });
+// };
+const handleSubmit = (event) => {
+  event.preventDefault();
 
-    // Log each part of submissionData for confirmation
-    console.log("Selected Audit Header ID:", selectedAuditHeaderId);
-    console.log("Responses:", submissionData.responses);
-    console.log("Comments:", submissionData.comments);
-    console.log("Images:", submissionData.images);
-    console.log("Complete Submission Data:", submissionData);
+  const formData = new FormData();
+  formData.append("auditId", selectedAuditHeaderId);
 
-    // Submit to backend
-    axios.post('/api/submit_audit', submissionData, { headers: { 'Content-Type': 'application/json' } })
-      .then(response => {
-        console.log('Form submitted successfully:', response.data);
-        alert('Audit successfully submitted!');
-      })
-      .catch(error => {
-        console.error('There was an error submitting the form:', error);
-        alert('An error occurred while submitting the audit. Please try again.');
+  // Append responses and comments as JSON strings
+  const responsesOnly = {};
+  for (const questionId in formResponses) {
+      responsesOnly[questionId] = formResponses[questionId].response || '';
+  }
+  formData.append("responses", JSON.stringify(responsesOnly));
+  formData.append("comments", JSON.stringify(comments));
+
+  // Append each image file for each question separately
+  for (const questionId in images) {
+      images[questionId].forEach((file) => {
+          console.log(`Appending image for ${questionId}:`, file.name);
+          formData.append(`images[${questionId}][]`, file);
       });
+  }
+
+  axios.post('/api/submit_audit', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  .then(response => {
+      console.log('Form submitted successfully:', response.data);
+      alert('Audit successfully submitted!');
+  })
+  .catch(error => {
+      console.error('There was an error submitting the form:', error);
+      alert('An error occurred while submitting the audit. Please try again.');
+  });
 };
 
   return (

@@ -8,7 +8,14 @@ function ViewAudits() {
   useEffect(() => {
     axios.get('/api/get_audits')
       .then(response => {
-        setAudits(groupByAuditId(response.data)); // Store the grouped data in state
+        const data = response.data;
+
+        // Ensure data is an array before applying `reduce`
+        if (Array.isArray(data)) {
+          setAudits(groupByAuditId(data)); // Store the grouped data in state
+        } else {
+          console.error('Expected an array but received:', data);
+        }
       })
       .catch(error => {
         console.error('Error fetching audit data:', error);
