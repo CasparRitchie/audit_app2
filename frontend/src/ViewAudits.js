@@ -82,6 +82,7 @@ function ViewAudits() {
                     <td>{audit.response || ''}</td> {/* Now directly accessing response */}
                     <td>{audit.comment || ''}</td>
                     <td>{audit.image_path || ''}</td>
+                    <td>{audit.auditHeaderID || 'No Header'}</td>
                   </tr>
                 ))}
               </tbody>

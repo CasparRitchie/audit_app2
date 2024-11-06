@@ -213,7 +213,6 @@ function QuestionBaseComponent({
   };
 
   // Handle removing an image
-  // Handle removing an image
 const handleRemoveImage = () => {
   if (!setImages) {
     console.error("setImages function is not provided.");

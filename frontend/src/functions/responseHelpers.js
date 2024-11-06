@@ -32,8 +32,8 @@ export const getResponseStyle = (response, responseType) => {
     if (parseFloat(response) >= 63) return 'btn btn-success'; // Green if temperature >= 63
     return 'btn btn-danger'; // Red if temperature < 63
   } else if (responseType === 'Cold Temperature') {
-    if (parseFloat(response) >= 63) return 'btn btn-success'; // Green if temperature >= 63
-    return 'btn btn-danger'; // Red if temperature < 63
+    if (parseFloat(response) <= 10) return 'btn btn-success'; // Green if temperature <= 10
+    return 'btn btn-danger'; // Red if temperature > 10
   }
   return ''; // Default for other types
 };
