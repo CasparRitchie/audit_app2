@@ -111,25 +111,6 @@ def update_env_file(key, value):
     set_key(env_file_path, key, value)
 
 
-# def load_csv_from_dropbox(file_path, header_row=0, delimiter=','):
-#     dbx = get_dropbox_client()
-#     try:
-#         _, res = dbx.files_download(file_path)
-#         data = io.BytesIO(res.content)
-
-#         # Load the CSV data using the specified delimiter
-#         df = pd.read_csv(data, sep=delimiter, header=header_row)
-#         logging.info(f"DataFrame loaded from Dropbox (path: {file_path}):\nColumns: {df.columns}\nHead:\n{df.head()}")
-
-#         return df
-#     except dropbox.exceptions.ApiError as e:
-#         logging.error(f"Dropbox API error: {e}")
-#         return pd.DataFrame()  # Return an empty DataFrame if file doesn't exist
-#     except pd.errors.ParserError as e:
-#         logging.error(f"Parser error when reading CSV from Dropbox: {e}")
-#         return pd.DataFrame()
-
-
 def load_csv_from_dropbox(file_path, header_row=0, delimiter=','):
     dbx = get_dropbox_client()
     try:
@@ -153,36 +134,6 @@ def load_csv_from_dropbox(file_path, header_row=0, delimiter=','):
 
 
 # Function to save a DataFrame to a CSV file in Dropbox
-# def save_csv_to_dropbox(df_new, file_path):
-#     dbx = get_dropbox_client()
-
-#     try:
-#         # Download existing file content
-#         _, res = dbx.files_download(file_path)
-#         existing_data = pd.read_csv(io.BytesIO(res.content), sep=',', encoding='utf-8')
-
-#         # Confirm existing data structure with logging
-#         logging.info(f"Existing data loaded from Dropbox:\n{existing_data.head()}")
-
-#         # Check if existing_data is empty or malformed
-#         if existing_data.empty or existing_data.columns[0].startswith("auditId,question"):
-#             logging.warning("Existing data appears malformed; reloading with corrected columns.")
-#             existing_data = pd.DataFrame(columns=df_new.columns)  # Use new data's columns if malformed
-
-#     except dropbox.exceptions.ApiError:
-#         # File doesn't exist, create a new DataFrame with same columns
-#         logging.warning("No existing file found or error loading existing file. Using new data only.")
-#         existing_data = pd.DataFrame(columns=df_new.columns)
-
-#     # Append new data to the existing DataFrame
-#     combined_data = pd.concat([existing_data, df_new], ignore_index=True)
-#     logging.info(f"Final data to be saved to Dropbox:\n{combined_data.head()}")
-
-#     # Convert to CSV and save
-#     csv_data = combined_data.to_csv(index=False, sep=',')
-#     dbx.files_upload(csv_data.encode('utf-8'), file_path, mode=dropbox.files.WriteMode('overwrite'))
-#     logging.info(f"Saved CSV to {file_path} on Dropbox")
-
 
 def save_csv_to_dropbox(df_new, file_path):
     dbx = get_dropbox_client()
@@ -496,8 +447,15 @@ def submit_audit():
     data_to_save = []
 
     # Process each question response
+
+    # Process each question response
     for question_id, response_value in responses.items():
+        # Log each question_id and its associated response and comment
+        logging.info(f"Processing Question ID: {question_id}")
+        logging.info(f"Response for Question ID {question_id}: {response_value}")
         comment_value = comments.get(question_id, "")
+        logging.info(f"Comment for Question ID {question_id}: {comment_value}")
+
         image_paths = []  # To store paths of uploaded images
 
         # Retrieve images with the format `images[question_id][]`
@@ -519,19 +477,22 @@ def submit_audit():
         # Append data for this question to save to CSV
         data_entry = {
             "auditId": audit_header_id,
-            "auditDetailId": audit_detail_id,
             "question": question_id,
             "response": response_value,
             "comment": comment_value,
             "image_path": json.dumps(image_paths),  # Store image paths as JSON string
+            "auditDetailId": audit_detail_id,
             "auditHeaderID": audit_header_id  # Ensure auditHeaderID is set
         }
         data_to_save.append(data_entry)
-        logging.info(f"Data for question {question_id} added to save list: {data_entry}")
-
+        logging.info(f"Data entry for question {question_id} added to save list: {data_entry}")
+    # Convert new data to DataFrame
     # Convert new data to DataFrame
     df_new_data = pd.DataFrame(data_to_save)
     df_new_data.columns = df_new_data.columns.str.strip()  # Ensure no leading/trailing spaces in headers
+
+    # Log df_new_data to confirm it contains the expected new entries
+    logging.info(f"New data to append:\n{df_new_data}")
 
     # Load existing data to avoid duplication and drop extra columns
     existing_data = load_csv_from_dropbox(RESPONSES_CSV_PATH)
@@ -543,15 +504,13 @@ def submit_audit():
     if 'auditHeaderID' not in existing_data.columns:
         existing_data['auditHeaderID'] = audit_header_id
 
-    # Align columns with new data if needed
-    missing_cols = set(df_new_data.columns) - set(existing_data.columns)
-    for col in missing_cols:
-        existing_data[col] = None
+    # Concatenate the existing and new data without using drop_duplicates
+    combined_data = pd.concat([existing_data, df_new_data], ignore_index=True)
 
-    # Concatenate and drop any duplicate rows based on 'auditDetailId' to ensure unique entries
-    combined_data = pd.concat([existing_data, df_new_data], ignore_index=True).drop_duplicates(subset=['auditDetailId'])
+    # Log combined_data to confirm both existing and new rows are included
+    logging.info(f"Final data to be saved to Dropbox after appending new entries:\n{combined_data.head(10)}")
 
-    # Save combined data back to Dropbox, ensuring no extra columns
+    # Save combined data back to Dropbox
     save_csv_to_dropbox(combined_data, RESPONSES_CSV_PATH)
     logging.info("Audit details with images and comments saved successfully to CSV.")
     return jsonify({"message": "Audit details submitted successfully"}), 200
