@@ -33,7 +33,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/audit-header" element={<AuditHeaderGeneral />} />
-              <Route path="/create" element={<AuditDetail updateProgress={updateProgress} />} />
+              <Route path="/create" element={<AuditDetail updateProgress={updateProgress} progressData={progressData} />} />
               <Route path="/view" element={<ViewAudits />} />
               <Route path="/edit" element={<EditAudit />} />
               <Route path="/analyse" element={<Analyse />} />

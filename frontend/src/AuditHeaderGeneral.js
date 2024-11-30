@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import AuditHeader from './AuditHeader'; // Import the AuditHeader component
 
 function AuditHeaderGeneral() {

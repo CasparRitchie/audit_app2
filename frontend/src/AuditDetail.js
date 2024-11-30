@@ -998,6 +998,8 @@ const handleSubmit = (event) => {
                               handleImageChange={handleImageChange}
                               handleDuplicate={handleDuplicate}
                               handleRemove={(q) => handleRemoveQuestion(sousChapitre, q)}
+                              handleReAddQuestion={handleReAddQuestion} // Ensure this is passed
+                              handleRemoveDuplicate={handleRemoveDuplicate} // Ensure this is passed
                               comments={comments}
                               images={images}
                               setImages={setImages}
