@@ -59,13 +59,13 @@ function AuditHeader() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    // Always generate a new unique audit header ID
+    const auditId = 'audit_' + Date.now();
+
     const formData = new FormData();
-    let auditId = localStorage.getItem("auditId");
-    if (!auditId) {
-      auditId = 'audit_' + Date.now();
-      localStorage.setItem("auditId", auditId);
-    }
     formData.append('auditId', auditId);
+
     Object.entries(headerResponses).forEach(([questionId, response]) => {
       formData.append(`header[${questionId}]`, response);
     });
@@ -73,7 +73,9 @@ function AuditHeader() {
     axios.post('/api/submit', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    .then(() => alert('Audit header submitted successfully!'))
+    .then(() => {
+      alert(`Audit header submitted successfully! New ID: ${auditId}`);
+    })
     .catch(error => console.error('Error submitting audit header:', error));
   };
 

@@ -42,6 +42,7 @@ function Home() {
         <button onClick={() => navigate('/view')}>Voir Audits</button>
         <button onClick={() => navigate('/edit')}>Editer Audit (en construction)</button>
         <button onClick={() => navigate('/analyse')}>Analyse Audits</button>
+        <button onClick={() => navigate('/livrable')}>Livrable</button>
 
       </div>
     </div>

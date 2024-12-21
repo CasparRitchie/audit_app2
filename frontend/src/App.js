@@ -6,6 +6,7 @@ import AuditDetail from './AuditDetail';
 import ViewAudits from './ViewAudits';
 import EditAudit from './EditAudit';
 import Analyse from './Analyse';
+import Livrable from './Livrable';
 
 function App() {
   const [progressData, setProgressData] = useState({});
@@ -27,6 +28,7 @@ function App() {
                 <Link className="nav-item nav-link" to="/view">Voir Audits</Link>
                 <Link className="nav-item nav-link" to="/edit">Editer Audit</Link>
                 <Link className="nav-item nav-link" to="/analyse">Analyse Audits</Link>
+                <Link className="nav-item nav-link" to="/livrable">Livrable</Link>
               </div>
             </nav>
 
@@ -37,6 +39,7 @@ function App() {
               <Route path="/view" element={<ViewAudits />} />
               <Route path="/edit" element={<EditAudit />} />
               <Route path="/analyse" element={<Analyse />} />
+              <Route path="/livrable" element={<Livrable />} />
             </Routes>
           </div>
         </div>

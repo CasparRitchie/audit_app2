@@ -1,0 +1,17 @@
+/* Livrable.css */
+.chart-image {
+  width: 20%;
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  .chart-image {
+    width: 50%; /* Increase size for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-image {
+    width: 70%; /* Further increase for very small screens */
+  }
+}

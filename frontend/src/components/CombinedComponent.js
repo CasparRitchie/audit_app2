@@ -415,6 +415,33 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits, response
                         sousParagraphe={sousParagraphe}
                         responseCounts={responseCounts}
                       />
+                      {/* Render Charts */}
+                      <div>
+                        {sectionChartUrls[`${sousParagrapheKey}-CPCNC`] && (
+                          <img
+                            src={sectionChartUrls[`${sousParagrapheKey}-CPCNC`]}
+                            alt="CPCNC Chart"
+                          />
+                        )}
+                        {sectionChartUrls[`${sousParagrapheKey}-OKKO`] && (
+                          <img
+                            src={sectionChartUrls[`${sousParagrapheKey}-OKKO`]}
+                            alt="OKKO Chart"
+                          />
+                        )}
+                        {sectionChartUrls[`${sousParagrapheKey}-Temperature`] && (
+                          <img
+                            src={sectionChartUrls[`${sousParagrapheKey}-Temperature`]}
+                            alt="Temperature Chart"
+                          />
+                        )}
+                        {sectionChartUrls[`${sousParagrapheKey}-Cold Temperature`] && (
+                          <img
+                            src={sectionChartUrls[`${sousParagrapheKey}-Cold Temperature`]}
+                            alt="Cold Temperature Chart"
+                          />
+                        )}
+                      </div>
                     </div>
                   );
                 }

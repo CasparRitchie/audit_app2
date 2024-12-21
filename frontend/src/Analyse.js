@@ -234,6 +234,29 @@ function Analyse() {
       </>
     );
   };
+  // const renderChartsAndDetails = () => {
+  //   if (!isDataProcessed) {
+  //     return <p>Loading data...</p>;
+  //   }
+
+  //   return (
+  //     <>
+  //       <SummaryCharts
+  //         key={selectedAuditHeaderId}
+  //         auditId={selectedAuditHeaderId}
+  //         cpcncData={calculateCPCNC(filteredAudits)}
+  //         okkoData={calculateOKKO(filteredAudits)}
+  //         temperatureData={calculateTemperature(filteredAudits)}
+  //         coldtemperatureData={calculateColdTemperature(filteredAudits)}
+  //       />
+  //       <RenderAuditDetailsWithResponses
+  //         auditDetail={auditDetail}
+  //         filteredAudits={filteredAudits}
+  //         responseMap={responseMap} // Pass Map to child component
+  //       />
+  //     </>
+  //   );
+  // };
 
   const uniqueAuditHeaderIds = audits.reduce((uniqueIds, audit) => {
     const auditIdStr = String(audit.auditId);

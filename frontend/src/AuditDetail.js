@@ -819,40 +819,55 @@ function AuditDetail({ updateProgress }) {
   };
 
 
-const handleSubmit = (event) => {
-  event.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-  const formData = new FormData();
-  formData.append("auditId", selectedAuditHeaderId);
+    // Generate a new audit detail ID
+    const auditDetailId = 'auditDetail_' + Date.now();
 
-  // Append responses and comments as JSON strings
-  const responsesOnly = {};
-  for (const questionId in formResponses) {
-      responsesOnly[questionId] = formResponses[questionId].response || '';
-  }
-  formData.append("responses", JSON.stringify(responsesOnly));
-  formData.append("comments", JSON.stringify(comments));
+    const formData = new FormData();
+    formData.append("auditId", selectedAuditHeaderId);
+    formData.append("auditDetailId", auditDetailId);
 
-  // Append each image file for each question separately
-  for (const questionId in images) {
+    // Append responses and comments as JSON strings
+    const responsesOnly = {};
+    for (const questionId in formResponses) {
+      responsesOnly[questionId] = formResponses[questionId]?.response || '';
+    }
+    formData.append("responses", JSON.stringify(responsesOnly));
+    formData.append("comments", JSON.stringify(comments));
+
+    // Append each image file for each question separately
+    for (const questionId in images) {
       images[questionId].forEach((file) => {
-          console.log(`Appending image for ${questionId}:`, file.name);
-          formData.append(`images[${questionId}][]`, file);
+        console.log(`Appending image for ${questionId}:`, file.name);
+        formData.append(`images[${questionId}][]`, file);
       });
-  }
+    }
 
-  axios.post('/api/submit_audit', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-  })
-  .then(response => {
-      console.log('Form submitted successfully:', response.data);
-      alert('Audit successfully submitted!');
-  })
-  .catch(error => {
-      console.error('There was an error submitting the form:', error);
+    axios.post('/api/submit_audit', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then(() => {
+      alert(`Audit successfully submitted! New ID: ${auditDetailId}`);
+
+      // Reset state after successful submission
+      setFormResponses({});
+      setComments({});
+      setImages({});
+      setDuplicates({});
+      setRemovedQuestions({});
+      localStorage.removeItem("auditResponses");
+      localStorage.removeItem("removedQuestions");
+
+      // Optionally reset the selected header if needed
+      setSelectedAuditHeaderId(null);
+    })
+    .catch((error) => {
+      console.error('Error submitting the audit:', error);
       alert('An error occurred while submitting the audit. Please try again.');
-  });
-};
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit}>
