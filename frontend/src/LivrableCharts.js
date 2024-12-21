@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData, coldtemperatureData }) {
+function LivrableCharts({ auditId, cpcncData, okkoData, temperatureData, coldtemperatureData }) {
   const [isLoading, setIsLoading] = useState(true);
   const [cpcncChartUrl, setCpcncChartUrl] = useState(null);
   const [okkoChartUrl, setOkkoChartUrl] = useState(null);
@@ -133,4 +133,4 @@ function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData, coldtemp
   );
 }
 
-export default SummaryCharts;
+export default LivrableCharts;

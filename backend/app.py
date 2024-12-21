@@ -14,6 +14,10 @@ from dotenv import set_key
 import matplotlib.pyplot as plt
 import matplotlib
 import uuid
+import math
+from flask import Flask, send_file
+from plotly import graph_objects as go
+import numpy as np
 
 matplotlib.use('Agg')  # Use Agg backend for non-GUI environments
 
@@ -811,6 +815,102 @@ def get_cold_temperature_chart(under10, over10):
     plt.close()
 
     return send_file(img, mimetype='image/png')
+
+
+@app.route('/api/chart/gauge/overall/<int:green_count>/<int:amber_count>/<int:red_count>', methods=['GET'])
+def generate_overall_gauge(green_count, amber_count, red_count):
+    total = green_count + amber_count + red_count
+    green_percentage = (green_count / total) * 100 if total else 0
+    amber_percentage = (amber_count / total) * 100 if total else 0
+    red_percentage = (red_count / total) * 100 if total else 0
+
+    # Correct pointer calculation
+    pointer_value = (green_percentage + amber_percentage) / 2
+
+    # Define gauge zones and the pointer
+    colors = ["#28a745", "#ffc107", "#dc3545"]
+    labels = ["Green (OK, C, Safe Temp)", "Amber (PC)", "Red (NC, NOK, Unsafe Temp)"]
+    values = [green_percentage, amber_percentage, red_percentage]
+
+    fig = go.Figure(go.Pie(
+        values=values,
+        labels=labels,
+        marker=dict(colors=colors),
+        textinfo="label+percent",
+        hole=0.5,
+    ))
+
+    # Add the gauge pointer
+    angle = (1 - (pointer_value / 100)) * 180  # Scale to 180 degrees
+    fig.add_shape(
+        type="line",
+        x0=0.5,
+        x1=0.5 + 0.4 * math.cos(math.radians(angle)),
+        y0=0.5,
+        y1=0.5 + 0.4 * math.sin(math.radians(angle)),
+        line=dict(color="black", width=4)
+    )
+
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor="#f9f9f9",
+    )
+
+    # Save chart as PNG
+    img = io.BytesIO()
+    fig.write_image(img, format="png")
+    img.seek(0)
+
+    return send_file(img, mimetype="image/png")
+
+
+@app.route('/api/chart/gauge/cpcnc/<int:c_count>/<int:pc_count>/<int:nc_count>', methods=['GET'])
+def generate_cpcnc_gauge(c_count, pc_count, nc_count):
+    total = c_count + pc_count + nc_count
+    green_percentage = (c_count / total) * 100 if total else 0
+    amber_percentage = (pc_count / total) * 100 if total else 0
+    red_percentage = (nc_count / total) * 100 if total else 0
+
+    # Correct pointer calculation
+    pointer_value = (green_percentage + amber_percentage) / 2
+
+    # Define gauge zones and the pointer
+    colors = ["#28a745", "#ffc107", "#dc3545"]
+    labels = ["Green (C)", "Amber (PC)", "Red (NC)"]
+    values = [green_percentage, amber_percentage, red_percentage]
+
+    fig = go.Figure(go.Pie(
+        values=values,
+        labels=labels,
+        marker=dict(colors=colors),
+        textinfo="label+percent",
+        hole=0.5,
+    ))
+
+    # Add the gauge pointer
+    angle = (1 - (pointer_value / 100)) * 180  # Scale to 180 degrees
+    fig.add_shape(
+        type="line",
+        x0=0.5,
+        x1=0.5 + 0.4 * math.cos(math.radians(angle)),
+        y0=0.5,
+        y1=0.5 + 0.4 * math.sin(math.radians(angle)),
+        line=dict(color="black", width=4)
+    )
+
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor="#f9f9f9",
+    )
+
+    # Save chart as PNG
+    img = io.BytesIO()
+    fig.write_image(img, format="png")
+    img.seek(0)
+
+    return send_file(img, mimetype="image/png")
 
 
 if __name__ == '__main__':
