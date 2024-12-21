@@ -18,6 +18,7 @@ import math
 from flask import Flask, send_file
 from plotly import graph_objects as go
 import numpy as np
+from PIL import Image
 
 matplotlib.use('Agg')  # Use Agg backend for non-GUI environments
 
@@ -817,52 +818,83 @@ def get_cold_temperature_chart(under10, over10):
     return send_file(img, mimetype='image/png')
 
 
+
 @app.route('/api/chart/gauge/overall/<int:green_count>/<int:amber_count>/<int:red_count>', methods=['GET'])
 def generate_overall_gauge(green_count, amber_count, red_count):
-    total = green_count + amber_count + red_count
-    green_percentage = (green_count / total) * 100 if total else 0
-    amber_percentage = (amber_count / total) * 100 if total else 0
-    red_percentage = (red_count / total) * 100 if total else 0
+    # Calculate percentages for Red, Amber, Green
+    total_responses = green_count + amber_count + red_count
+    green_percentage = (green_count / total_responses) * 100 if total_responses else 0
+    amber_percentage = (amber_count / total_responses) * 100 if total_responses else 0
+    red_percentage = (red_count / total_responses) * 100 if total_responses else 0
 
-    # Correct pointer calculation
-    pointer_value = (green_percentage + amber_percentage) / 2
+    # Fix percentages to sum to 50% for visible part of semicircle
+    visible_total = red_percentage + amber_percentage + green_percentage
+    invisible_padding = 50  # Fill the other half of the semicircle
+    scale_factor = 50 / visible_total  # Scale visible percentages to sum to 50%
 
-    # Define gauge zones and the pointer
-    colors = ["#28a745", "#ffc107", "#dc3545"]
-    labels = ["Green (OK, C, Safe Temp)", "Amber (PC)", "Red (NC, NOK, Unsafe Temp)"]
-    values = [green_percentage, amber_percentage, red_percentage]
+    red_scaled = red_percentage * scale_factor
+    amber_scaled = amber_percentage * scale_factor
+    green_scaled = green_percentage * scale_factor
 
+    # Define the values in the fixed Red → Amber → Green order
+    values = [red_scaled, amber_scaled, green_scaled, invisible_padding]
+    labels = [
+        f"NC ({red_percentage:.1f}%)",
+        f"PC ({amber_percentage:.1f}%)",
+        f"C ({green_percentage:.1f}%)",
+        "",  # Invisible padding
+    ]
+    colors = ["#dc3545", "#ffc107", "#28a745", "rgba(0,0,0,0)"]  # Red, Amber, Green, Transparent
+
+    # Create the pie chart
     fig = go.Figure(go.Pie(
         values=values,
         labels=labels,
         marker=dict(colors=colors),
-        textinfo="label+percent",
-        hole=0.5,
+        textinfo="label",  # Show labels with percentages
+        hole=0.5,                  # Donut chart
+        direction="clockwise",     # Direction of the chart
+        rotation=270,              # Start Red at the bottom
+        sort=False                 # Do not auto-sort the order
     ))
 
-    # Add the gauge pointer
-    angle = (1 - (pointer_value / 100)) * 180  # Scale to 180 degrees
+    # Calculate pointer angle (ensure high = right, low = left)
+    pointer_value = red_percentage + (amber_percentage / 2)  # Midpoint between Red and Amber
+    pointer_angle = (pointer_value / 100) * 180  # Flip so higher values point right
+
+    # Add the needle/pointer
     fig.add_shape(
         type="line",
         x0=0.5,
-        x1=0.5 + 0.4 * math.cos(math.radians(angle)),
         y0=0.5,
-        y1=0.5 + 0.4 * math.sin(math.radians(angle)),
+        x1=0.5 + 0.4 * math.cos(math.radians(pointer_angle)),
+        y1=0.5 + 0.4 * math.sin(math.radians(pointer_angle)),
         line=dict(color="black", width=4)
     )
 
+    # Update layout for the semicircle
     fig.update_layout(
-        showlegend=False,
-        margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor="#f9f9f9",
+        showlegend=False,          # Hide legend
+        margin=dict(l=0, r=0, t=0, b=0),  # Remove margins
+        paper_bgcolor="#f9f9f9",   # Background color
     )
 
-    # Save chart as PNG
+    # Save the chart as PNG
     img = io.BytesIO()
     fig.write_image(img, format="png")
     img.seek(0)
 
-    return send_file(img, mimetype="image/png")
+    # Crop the image to remove the blank bottom half
+    img = Image.open(img)  # Open the generated image
+    width, height = img.size  # Get original dimensions
+    cropped_img = img.crop((0, 0, width, height // 2))  # Crop the bottom half
+    cropped_img_io = io.BytesIO()
+    cropped_img.save(cropped_img_io, format="PNG")
+    cropped_img_io.seek(0)
+
+    return send_file(cropped_img_io, mimetype="image/png")
+
+
 
 
 @app.route('/api/chart/gauge/cpcnc/<int:c_count>/<int:pc_count>/<int:nc_count>', methods=['GET'])
