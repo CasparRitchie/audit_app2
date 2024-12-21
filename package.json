@@ -7,6 +7,8 @@
   "dependencies": {
     "bootstrap": "^5.3.3",
     "dropbox": "^10.34.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
     "react-bootstrap": "^2.10.4"
   }
 }
