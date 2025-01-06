@@ -897,24 +897,28 @@ function AuditDetail({ updateProgress }) {
           <div className="col-md-9">
             <h2>Grilles de l'audit</h2>
 
-            {/* Dropdown for selecting an audit header */}
-            <div className="form-group">
-              <label htmlFor="auditHeaderSelect">Select Audit Header:</label>
-              <select
-                id="auditHeaderSelect"
-                className="form-control"
-                value={selectedAuditHeaderId || ""}
-                onChange={(e) => setSelectedAuditHeaderId(e.target.value)}
-                required
-              >
-                <option value="" disabled>Select an audit header</option>
-                {auditHeaders.map((header, index) => (
-                  <option key={index} value={header.auditId}>
-                    {header.auditId} - {header.question}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Dropdown for selecting an audit header */}
+          <div className="form-group">
+            <label htmlFor="auditHeaderSelect">Select Audit Header:</label>
+            <select
+              id="auditHeaderSelect"
+              className="form-control"
+              value={selectedAuditHeaderId || ""}
+              onChange={(e) => setSelectedAuditHeaderId(e.target.value)}
+              required
+            >
+              <option value="" disabled>
+                Select an audit header
+              </option>
+              {[...new Set(auditHeaders.map((header) => header.auditId))].map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          </div>
+
+
 
             {data &&
   Object.entries(data)

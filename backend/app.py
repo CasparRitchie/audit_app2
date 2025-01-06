@@ -323,24 +323,83 @@ def get_audit_headers():
         # Load the CSV file
         df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
 
-        # Check that the necessary columns are present
-        required_columns = {'auditId', 'question'}
+        # Log the columns to ensure we're working with the correct data
+        logging.info(f"Audit Headers CSV Columns: {df.columns}")
+
+        # Check that at least 'auditId' is present
+        required_columns = {'auditId'}
         if not required_columns.issubset(df.columns):
-            logging.error("Missing columns in the audit header CSV.")
-            return jsonify({"error": "Missing columns in the audit header data"}), 500
+            logging.error("Missing 'auditId' column in the audit header CSV.")
+            return jsonify({"error": "Missing required columns in the audit header data"}), 500
 
-        # Drop duplicates to get unique headers
-        unique_headers = df[['auditId', 'question']].drop_duplicates()
+        # Replace NaN values with None for JSON compatibility
+        df = df.where(pd.notnull(df), None)
 
-        # Convert DataFrame to dictionary format for JSON response
-        headers_data = unique_headers.to_dict(orient='records')
-        logging.info(f"Audit Headers loaded for dropdown: {headers_data}")
+        # Convert the DataFrame to a dictionary format for JSON response
+        headers_data = df.to_dict(orient='records')
+        logging.info(f"Audit Headers loaded: {headers_data}")
 
         return jsonify(headers_data)
 
     except Exception as e:
         logging.error(f"Error loading audit headers: {e}")
         return jsonify({"error": "Failed to load audit headers"}), 500
+
+
+@app.route('/api/get_audit_headers_grouped', methods=['GET'])
+def get_audit_headers_grouped():
+    try:
+        # Load the CSV file
+        df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
+
+        # Replace NaN values with None for JSON compatibility
+        df = df.where(pd.notnull(df), None)
+
+        # Group data by 'auditId'
+        grouped_data = df.groupby('auditId').apply(
+            lambda group: {
+                "auditId": group.name,
+                "questions": group[['question', 'response', 'comment', 'image_path']].to_dict(orient='records')
+            }
+        ).tolist()
+
+        logging.info(f"Grouped Audit Headers: {grouped_data}")
+
+        return jsonify(grouped_data)
+
+    except Exception as e:
+        logging.error(f"Error loading grouped audit headers: {e}")
+        return jsonify({"error": "Failed to load grouped audit headers"}), 500
+
+
+@app.route('/api/get_audit_header_detail/<auditId>', methods=['GET'])
+def get_audit_header_detail(auditId):
+    try:
+        # Load the CSV file
+        df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
+
+        # Check if required columns are present
+        required_columns = {'auditId', 'question'}
+        if not required_columns.issubset(df.columns):
+            logging.error("Missing columns in the audit header CSV.")
+            return jsonify({"error": "Missing columns in the audit header data"}), 500
+
+        # Filter the DataFrame to find the row(s) with the specified auditId
+        filtered_data = df[df['auditId'] == auditId]
+
+        # If no matching data is found, return an error
+        if filtered_data.empty:
+            return jsonify({"error": "No data found for the specified audit ID"}), 404
+
+        # Convert the filtered DataFrame to a dictionary for JSON response
+        header_data = filtered_data.to_dict(orient='records')
+        logging.info(f"Audit Header details loaded for ID {auditId}: {header_data}")
+
+        return jsonify(header_data)
+
+    except Exception as e:
+        logging.error(f"Error loading audit header for ID {auditId}: {e}")
+        return jsonify({"error": "Failed to load audit header details"}), 500
 
 
 # API route to fetch audit detail data
@@ -738,19 +797,43 @@ def oauth_callback():
         return "No authorization code provided."
 
 
+figure_size = (2, 2)
+
+
 @app.route('/api/chart/cpcnc/<int:c_count>/<int:pc_count>/<int:nc_count>', methods=['GET'])
 def get_cpcnc_chart(c_count, pc_count, nc_count):
     logging.debug(f"C/PC/NC counts received: C={c_count}, PC={pc_count}, NC={nc_count}")
 
-    # Pie chart, where the slices will be ordered and plotted counter-clockwise:
-    labels = 'C', 'PC', 'NC'
+    # Original data
+    labels = ['C', 'PC', 'NC']
     sizes = [c_count, pc_count, nc_count]
     colors = ['#28a745', '#ffc107', '#dc3545']
-    explode = (0.1, 0, 0)  # only "explode" the C slice (slightly pull out)
+    explode = (0.1, 0, 0)  # Only "explode" the C slice (slightly pull out)
 
-    plt.figure(figsize=(6, 6))
-    plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%',
-            shadow=True, startangle=140, textprops={'fontsize': 30})
+    # Filter out slices with a size of 0
+    filtered_labels = [label for label, size in zip(labels, sizes) if size > 0]
+    filtered_sizes = [size for size in sizes if size > 0]
+    filtered_colors = [color for size, color in zip(sizes, colors) if size > 0]
+    filtered_explode = [e for size, e in zip(sizes, explode) if size > 0]
+
+    # Custom autopct function to hide labels for zero values
+    def custom_autopct(pct, all_vals):
+        total = sum(all_vals)
+        absolute = int(round(pct * total / 100.0))
+        return f'{pct:.1f}%' if absolute > 0 else ''
+
+    # Generate the pie chart
+    plt.figure(figsize=(figure_size))
+    plt.pie(
+        filtered_sizes,
+        explode=filtered_explode,
+        labels=filtered_labels,
+        colors=filtered_colors,
+        autopct=lambda pct: custom_autopct(pct, filtered_sizes),  # Apply custom autopct
+        shadow=True,
+        startangle=140,
+        textprops={'fontsize': 10}  # Adjust text size for better readability
+    )
     plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 
     # Save chart to a BytesIO buffer
@@ -762,61 +845,104 @@ def get_cpcnc_chart(c_count, pc_count, nc_count):
     return send_file(img, mimetype='image/png')
 
 
-@app.route('/api/chart/okko/<int:ok_count>/<int:ko_count>', methods=['GET'])
-def get_okko_chart(ok_count, ko_count):
-    # Pie chart for OK/KO
-    labels = 'OK', 'KO'
-    sizes = [ok_count, ko_count]
-    colors = ['#28a745', '#dc3545']
-    explode = (0.1, 0)  # only "explode" the OK slice (slightly pull out)
+def generate_pie_chart(sizes, labels=None, colors=None, explode=None, startangle=90, textprops=None):
+    # Filter out slices with zero values
+    filtered_sizes = [size for size in sizes if size > 0]
+    if labels:
+        filtered_labels = [label for label, size in zip(labels, sizes) if size > 0]
+    else:
+        filtered_labels = None
+    if colors:
+        filtered_colors = [color for size, color in zip(sizes, colors) if size > 0]
+    else:
+        filtered_colors = None
+    if explode:
+        filtered_explode = [e for size, e in zip(sizes, explode) if size > 0]
+    else:
+        filtered_explode = None
 
-    plt.figure(figsize=(6, 6))
-    plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
-    plt.axis('equal')
+    # Custom autopct function to hide labels for zero values
+    def custom_autopct(pct, all_vals):
+        total = sum(all_vals)
+        absolute = int(round(pct * total / 100.0))
+        return f'{pct:.1f}%' if absolute > 0 else ''
 
+    # Create the pie chart
+    plt.figure(figsize=(figure_size))  # Adjust size as needed
+    plt.pie(
+        filtered_sizes,
+        labels=filtered_labels,
+        colors=filtered_colors,
+        explode=filtered_explode,
+        autopct=lambda pct: custom_autopct(pct, filtered_sizes),
+        shadow=True,
+        startangle=startangle,
+        textprops=textprops or {'fontsize': 10},  # Default text properties
+    )
+    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    # Save chart to a BytesIO buffer
     img = io.BytesIO()
     plt.savefig(img, format='png')
     img.seek(0)
     plt.close()
 
+    return img
+
+
+
+@app.route('/api/chart/okko/<int:ok_count>/<int:ko_count>', methods=['GET'])
+def get_okko_chart(ok_count, ko_count):
+    sizes = [ok_count, ko_count]
+    labels = ['OK', 'KO']
+    colors = ['#28a745', '#dc3545']
+    explode = (0.1, 0)  # Only "explode" the OK slice (slightly pull out)
+
+    img = generate_pie_chart(
+        sizes=sizes,
+        labels=labels,
+        colors=colors,
+        explode=explode,
+        startangle=90,
+        textprops={'fontsize': 10},
+    )
     return send_file(img, mimetype='image/png')
 
 
 @app.route('/api/chart/temperature/<int:over63>/<int:under63>', methods=['GET'])
 def get_temperature_chart(over63, under63):
     sizes = [over63, under63]
+    labels = ['Over 63°C', 'Under 63°C']
     colors = ['#28a745', '#dc3545']
-    explode = (0.1, 0)  # only "explode" the OK slice (slightly pull out)
+    explode = (0.1, 0)  # Only "explode" the Over slice (slightly pull out)
 
-    plt.figure(figsize=(6, 6))
-    plt.pie(sizes, explode=explode, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
-    plt.axis('equal')
-
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    plt.close()
-
+    img = generate_pie_chart(
+        sizes=sizes,
+        labels=labels,
+        colors=colors,
+        explode=explode,
+        startangle=90,
+        textprops={'fontsize': 10},
+    )
     return send_file(img, mimetype='image/png')
 
 
 @app.route('/api/chart/cold_temperature/<int:over10>/<int:under10>', methods=['GET'])
-def get_cold_temperature_chart(under10, over10):
-    sizes = [under10, over10]
+def get_cold_temperature_chart(over10, under10):
+    sizes = [over10, under10]
+    labels = ['Over 10°C', 'Under 10°C']
     colors = ['#28a745', '#dc3545']
-    explode = (0.1, 0)  # only "explode" the OK slice (slightly pull out)
+    explode = (0.1, 0)  # Only "explode" the Over slice (slightly pull out)
 
-    plt.figure(figsize=(6, 6))
-    plt.pie(sizes, explode=explode, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90, textprops={'fontsize': 30})
-    plt.axis('equal')
-
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    plt.close()
-
+    img = generate_pie_chart(
+        sizes=sizes,
+        labels=labels,
+        colors=colors,
+        explode=explode,
+        startangle=90,
+        textprops={'fontsize': 10},
+    )
     return send_file(img, mimetype='image/png')
-
 
 
 @app.route('/api/chart/gauge/overall/<int:green_count>/<int:amber_count>/<int:red_count>', methods=['GET'])

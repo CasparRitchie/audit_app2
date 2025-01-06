@@ -242,24 +242,23 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits, response
                             alt="OKKO Chart"
                           />
                         )}
+                        <h6>OKKO</h6>
+
                         {sectionChartUrls[`${sousParagrapheKey}-Temperature`] && (
                           <img
-                            src={sectionChartUrls[`${sousParagrapheKey}-Temperature`]}
-                            alt="Temperature Chart"
+                          src={sectionChartUrls[`${sousParagrapheKey}-Temperature`]}
+                          alt="Temperature Chart"
                           />
                         )}
+                        <h6>Chaud</h6>
                         {sectionChartUrls[`${sousParagrapheKey}-Cold Temperature`] && (
                           <img
-                            src={sectionChartUrls[`${sousParagrapheKey}-Cold Temperature`]}
-                            alt="Cold Temperature Chart"
+                          src={sectionChartUrls[`${sousParagrapheKey}-Cold Temperature`]}
+                          alt="Cold Temperature Chart"
                           />
                         )}
-                        {sectionChartUrls[`${sousParagrapheKey}-GaugeCPCNC`] && (
-                          <img
-                            src={sectionChartUrls[`${sousParagrapheKey}-GaugeCPCNC`]}
-                            alt="CPCNC Gauge Chart"
-                          />
-                        )}
+                        <h6>Froid</h6>
+                        <h5>Overall</h5>
                         {sectionChartUrls[`${sousParagrapheKey}-GaugeOverall`] && (
                           <img
                             src={sectionChartUrls[`${sousParagrapheKey}-GaugeOverall`]}
