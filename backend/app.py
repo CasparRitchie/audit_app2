@@ -372,6 +372,29 @@ def get_audit_headers_grouped():
         return jsonify({"error": "Failed to load grouped audit headers"}), 500
 
 
+@app.route('/api/get_audit_header_grouped/<audit_id>', methods=['GET'])
+def get_audit_header_grouped(audit_id):
+    try:
+        # Load the CSV file containing audit header responses
+        df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
+
+        # Filter for the specific audit header ID
+        filtered_df = df[df['auditId'] == audit_id]
+
+        # Group by auditId and organize questions and responses
+        grouped_data = {
+            "auditId": audit_id,
+            "questions": filtered_df[['question', 'response', 'comment', 'image_path']].to_dict(orient='records')
+        }
+
+        return jsonify(grouped_data)
+
+    except Exception as e:
+        logging.error(f"Error fetching grouped audit header for ID {audit_id}: {e}")
+        return jsonify({"error": "Failed to fetch audit header"}), 500
+
+
+
 @app.route('/api/get_audit_header_detail/<auditId>', methods=['GET'])
 def get_audit_header_detail(auditId):
     try:
@@ -408,83 +431,6 @@ def get_audit_detail():
     detail_data = load_detail_data()
     return jsonify(detail_data)
 
-
-# Function handling submission of audit details
-# @app.route('/api/submit_audit', methods=['POST'])
-# def submit_audit():
-#     logging.info("Starting audit submission process.")
-
-#     # Extract audit ID
-#     audit_header_id = request.form.get("auditId")
-#     if not audit_header_id:
-#         logging.error("Audit ID is missing in the form data.")
-#         return jsonify({"error": "Audit ID is missing"}), 400
-#     logging.info(f"Audit ID received: {audit_header_id}")
-
-#     # Extract responses and comments
-#     responses = json.loads(request.form.get("responses", "{}"))
-#     comments = json.loads(request.form.get("comments", "{}"))
-#     logging.info(f"Responses received: {responses}")
-#     logging.info(f"Comments received: {comments}")
-
-#     # Log all file keys for images
-#     logging.info(f"Received file keys: {list(request.files.keys())}")
-
-#     # Generate a unique auditDetailID for this submission
-#     audit_detail_id = str(uuid.uuid4())
-#     logging.info(f"Generated auditDetailID: {audit_detail_id}")
-
-#     # Initialize data structure for CSV
-#     data_to_save = []
-
-#     # Process each question response
-#     for question_id, response_value in responses.items():
-#         # Use plain string values instead of JSON serialization
-#         comment_value = comments.get(question_id, "")
-#         image_paths = []  # To store paths of uploaded images
-
-#         # Retrieve images with the format `images[question_id][]`
-#         images = request.files.getlist(f"images[{question_id}][]")
-#         logging.info(f"Number of images received for question {question_id}: {len(images)}")
-
-#         for image in images:
-#             if image.filename:
-#                 filename = secure_filename(image.filename)
-#                 dropbox_path = f"/uploads/{filename}"
-#                 try:
-#                     dbx = get_dropbox_client()
-#                     dbx.files_upload(image.read(), dropbox_path, mode=dropbox.files.WriteMode('overwrite'))
-#                     image_paths.append(dropbox_path)
-#                     logging.info(f"Image {filename} uploaded successfully to {dropbox_path}")
-#                 except Exception as e:
-#                     logging.error(f"Failed to upload image {filename}: {e}")
-
-#         # Convert image_paths to comma-separated string for CSV format
-#         image_paths_str = ",".join(image_paths)
-
-#         # Append data for this question to save to CSV
-#         data_entry = {
-#             "auditId": audit_header_id,
-#             "auditDetailId": audit_detail_id,
-#             "question": question_id,
-#             "response": response_value,  # Ensure response is directly assigned as a plain string
-#             "comment": comment_value,
-#             "image_path": image_paths_str  # Store image paths as a comma-separated string
-#         }
-#         data_to_save.append(data_entry)
-#         logging.info(f"Data for question {question_id} added to save list: {data_entry}")
-
-#     # Save data to CSV
-#     try:
-#         existing_data = load_csv_from_dropbox(RESPONSES_CSV_PATH)
-#         df_new_data = pd.DataFrame(data_to_save)
-#         df_combined = pd.concat([existing_data, df_new_data], ignore_index=True)
-#         save_csv_to_dropbox(df_combined, RESPONSES_CSV_PATH)
-#         logging.info("Audit details with images and comments saved successfully to CSV.")
-#         return jsonify({"message": "Audit details submitted successfully"}), 200
-#     except Exception as e:
-#         logging.error(f"Failed to save audit details to CSV: {e}")
-#         return jsonify({"error": "Failed to save audit details"}), 500
 
 @app.route('/api/submit_audit', methods=['POST'])
 def submit_audit():
