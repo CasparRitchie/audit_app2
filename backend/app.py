@@ -526,12 +526,76 @@ def submit_audit():
     return jsonify({"message": "Audit details submitted successfully"}), 200
 
 
+# @app.route('/api/submit', methods=['POST'])
+# def submit_audit_responses():
+#     try:
+#         # Retrieve form data and log for debugging
+#         data = request.form
+#         files = request.files
+#         logging.info(f"Form data received: {data}")
+
+#         audit_id = data.get('auditId')
+#         if not audit_id:
+#             logging.error("Missing auditId in form data.")
+#             return jsonify({"status": "error", "message": "Audit ID is missing"}), 400
+
+#         logging.info(f"Received audit submission with ID: {audit_id}")
+
+#         new_data = []
+
+#         # Process form responses
+#         for question, response in data.items():
+#             if question.startswith("header"):
+#                 q_key = question.split("[")[1][:-1]
+#                 response_value = response
+#                 comment = data.get(f'comments[{q_key}]', '')
+#                 image_list = []
+
+#                 # Handle image uploads if needed
+#                 if f'images[{q_key}][]' in files:
+#                     images = request.files.getlist(f'images[{q_key}][]')
+#                     for image in images:
+#                         image_filename = secure_filename(image.filename)
+#                         image_path = f"{UPLOAD_FOLDER}/{image_filename}"
+#                         dbx = get_dropbox_client()
+#                         dbx.files_upload(image.read(), image_path, mode=dropbox.files.WriteMode('overwrite'))
+#                         image_list.append(image_path)
+#                         logging.info(f"Uploaded image {image_filename} to Dropbox at {image_path}")
+
+#                 new_data.append({
+#                     "auditId": audit_id,
+#                     "question": q_key,
+#                     "response": response_value,
+#                     "comment": comment,
+#                     "image_path": json.dumps(image_list)
+#                 })
+
+#         if not new_data:
+#             logging.error("No valid responses processed; check form field names in frontend.")
+#             return jsonify({"status": "error", "message": "No responses to save"}), 400
+
+#         # Convert new_data to DataFrame and define consistent columns
+#         df_new = pd.DataFrame(new_data)
+#         expected_columns = ["auditId", "question", "response", "comment", "image_path"]
+#         df_new = df_new.reindex(columns=expected_columns)
+#         logging.info(f"New data to be saved:\n{df_new}")
+
+#         # Save the new data to Dropbox, appending to existing data if present
+#         save_csv_to_dropbox(df_new, RESPONSES_AUDIT_HEADER_CSV_PATH)
+
+#         return jsonify({"status": "success", "message": "Audit header saved successfully"})
+
+#     except Exception as e:
+#         logging.error(f"Error in submit_responses: {e}")
+#         return jsonify({"status": "error", "message": "Failed to submit responses"}), 500
+
+
+
 @app.route('/api/submit', methods=['POST'])
 def submit_audit_responses():
     try:
         # Retrieve form data and log for debugging
         data = request.form
-        files = request.files
         logging.info(f"Form data received: {data}")
 
         audit_id = data.get('auditId')
@@ -545,29 +609,14 @@ def submit_audit_responses():
 
         # Process form responses
         for question, response in data.items():
-            if question.startswith("header"):
-                q_key = question.split("[")[1][:-1]
+            if question.startswith("header"):  # Only process "header" fields
+                q_key = question.split("[")[1][:-1]  # Extract questionId from "header[questionId]"
                 response_value = response
-                comment = data.get(f'comments[{q_key}]', '')
-                image_list = []
-
-                # Handle image uploads if needed
-                if f'images[{q_key}][]' in files:
-                    images = request.files.getlist(f'images[{q_key}][]')
-                    for image in images:
-                        image_filename = secure_filename(image.filename)
-                        image_path = f"{UPLOAD_FOLDER}/{image_filename}"
-                        dbx = get_dropbox_client()
-                        dbx.files_upload(image.read(), image_path, mode=dropbox.files.WriteMode('overwrite'))
-                        image_list.append(image_path)
-                        logging.info(f"Uploaded image {image_filename} to Dropbox at {image_path}")
 
                 new_data.append({
                     "auditId": audit_id,
-                    "question": q_key,
-                    "response": response_value,
-                    "comment": comment,
-                    "image_path": json.dumps(image_list)
+                    "questionId": q_key,
+                    "response": response_value
                 })
 
         if not new_data:
@@ -576,7 +625,7 @@ def submit_audit_responses():
 
         # Convert new_data to DataFrame and define consistent columns
         df_new = pd.DataFrame(new_data)
-        expected_columns = ["auditId", "question", "response", "comment", "image_path"]
+        expected_columns = ["auditId", "questionId", "response"]
         df_new = df_new.reindex(columns=expected_columns)
         logging.info(f"New data to be saved:\n{df_new}")
 

@@ -523,47 +523,31 @@
 
 // export default Livrable;
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 function Livrable() {
-  const [selectedAuditHeaderId, setSelectedAuditHeaderId] = useState("");
+  const [selectedAuditHeaderId, setSelectedAuditHeaderId] = useState('');
   const [auditHeaderDetails, setAuditHeaderDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Fetch audit header details
+  // Fetch audit header details when an ID is selected
   useEffect(() => {
     if (selectedAuditHeaderId) {
       async function fetchAuditHeaderDetails() {
         setLoading(true);
+        setError(null); // Reset error state
         try {
           const response = await axios.get(
             `/api/get_audit_header_grouped/${selectedAuditHeaderId}`
           );
-
-          console.log(
-            "Raw Response from API for selected audit header ID:",
-            response.data
-          );
-
-          // Parse and sanitize the questions array
-          if (response.data && Array.isArray(response.data.questions)) {
-            const sanitizedQuestions = response.data.questions.map((q) => ({
-              ...q,
-              comment: isNaN(q.comment) ? "No comment" : q.comment,
-              image_path: q.image_path || "No image",
-            }));
-
-            setAuditHeaderDetails({
-              ...response.data,
-              questions: sanitizedQuestions,
-            });
-          } else {
-            console.warn("Invalid questions structure:", response.data);
-            setAuditHeaderDetails(null);
-          }
+          console.log('Response from API:', response.data); // Log the response
+          setAuditHeaderDetails(response.data);
         } catch (error) {
-          console.error("Error fetching audit header details:", error);
+          console.error('Error fetching audit header details:', error);
+          setError('Failed to fetch audit header details.');
           setAuditHeaderDetails(null);
         } finally {
           setLoading(false);
@@ -572,39 +556,15 @@ function Livrable() {
 
       fetchAuditHeaderDetails();
     } else {
-      setAuditHeaderDetails(null);
+      setAuditHeaderDetails(null); // Reset state when no ID is selected
     }
   }, [selectedAuditHeaderId]);
 
-  const renderQuestions = () => {
-    if (!auditHeaderDetails || !auditHeaderDetails.questions) {
-      return <p>No questions available for this audit header.</p>;
-    }
-
-    return (
-      <div>
-        <h3>Questions</h3>
-        <ul>
-          {auditHeaderDetails.questions.map((question, index) => (
-            <li key={index}>
-              <strong>Question {question.question}:</strong>{" "}
-              {question.response || "No response"}
-              <div>
-                <em>Comment: {question.comment}</em>
-              </div>
-              <div>
-                <em>Image Path: {question.image_path}</em>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
   return (
     <div className="container">
-      <h1>Livrable - Render Questions</h1>
+      <h1>Livrable - Basic Test</h1>
+
+      {/* Dropdown to select an audit header ID */}
       <div className="form-group">
         <label htmlFor="auditSelect">Choisir Audit Header ID:</label>
         <select
@@ -613,21 +573,24 @@ function Livrable() {
           value={selectedAuditHeaderId}
           onChange={(e) => setSelectedAuditHeaderId(e.target.value)}
         >
-          <option value="">Veuillez choisir un audit</option>
+          <option value="">Veuillez choisir un audit header ID</option>
           <option value="audit_1730383065779">audit_1730383065779</option>
           <option value="audit_1733142988272">audit_1733142988272</option>
+          <option value="audit_1734865473061">audit_1734865473061</option>
         </select>
       </div>
 
-      {loading ? (
-        <p>Loading audit header details...</p>
-      ) : (
-        <div>
-          <h3>Raw Audit Header Details</h3>
-          <pre>{JSON.stringify(auditHeaderDetails, null, 2)}</pre>
+      {/* Display loading message */}
+      {loading && <p>Loading audit header details...</p>}
 
-          {/* Render questions */}
-          {renderQuestions()}
+      {/* Display error message */}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* Display audit header details */}
+      {auditHeaderDetails && (
+        <div>
+          <h3>Audit Header Details</h3>
+          <pre>{JSON.stringify(auditHeaderDetails, null, 2)}</pre>
         </div>
       )}
     </div>
