@@ -857,7 +857,7 @@ def get_temperature_chart(over63, under63):
 @app.route('/api/chart/cold_temperature/<int:over10>/<int:under10>', methods=['GET'])
 def get_cold_temperature_chart(over10, under10):
     sizes = [over10, under10]
-    labels = ['Over 10°C', 'Under 10°C']
+    labels = ['Under 10°C', 'Over 10°C']
     colors = ['#28a745', '#dc3545']
     explode = (0.1, 0)  # Only "explode" the Over slice (slightly pull out)
 

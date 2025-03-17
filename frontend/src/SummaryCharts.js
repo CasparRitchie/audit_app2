@@ -39,9 +39,9 @@ function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData, coldtemp
         setter: setTemperatureChartUrl,
       });
     }
-    if (coldtemperatureData && (coldtemperatureData.over10 || coldtemperatureData.under10)) {
+    if (coldtemperatureData && (coldtemperatureData.under10 || coldtemperatureData.over10)) {
       newQueue.push({
-        url: `/api/chart/cold_temperature/${coldtemperatureData.over10}/${coldtemperatureData.under10}?t=${timestamp}`,
+        url: `/api/chart/cold_temperature/${coldtemperatureData.under10}/${coldtemperatureData.over10}?t=${timestamp}`,
         setter: setColdTemperatureChartUrl,
       });
     }
@@ -90,7 +90,7 @@ function SummaryCharts({ auditId, cpcncData, okkoData, temperatureData, coldtemp
       chartUrl: temperatureChartUrl,
     },
     'Cold Temperature Proportion': {
-      values: [coldtemperatureData.over10, coldtemperatureData.under10],
+      values: [coldtemperatureData.under10, coldtemperatureData.over10],
       chartUrl: coldtemperatureChartUrl,
     },
   };

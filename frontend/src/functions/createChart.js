@@ -11,7 +11,7 @@ export const createChart = async (responseCounts, sousParagrapheKey, chartType, 
     url = `/api/chart/okko/${OK}/${KO}`;
   } else if (chartType === 'Temperature' && (over63 || under63)) {
     url = `/api/chart/temperature/${over63}/${under63}`;
-  } else if (chartType === 'Cold Temperature' && (over63 || under63)) {
+  } else if (chartType === 'Cold Temperature' && (under10 || over10)) {
     url = `/api/chart/coldtemperature/${under10}/${over10}`;
   }
 

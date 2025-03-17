@@ -17,7 +17,7 @@ const RenderAuditDetailsWithResponses = ({ auditDetail, filteredAudits, response
     } else if (chartType === 'Temperature' && (over63 > 0 || under63 > 0)) {
       url = `/api/chart/temperature/${over63}/${under63}`;
     } else if (chartType === 'Cold Temperature' && (over10 > 0 || under10 > 0)) {
-      url = `/api/chart/cold_temperature/${over10}/${under10}`;
+      url = `/api/chart/cold_temperature/${under10}/${over10}`;
     } else if (chartType === 'GaugeCPCNC') {
       url = `/api/chart/gauge/cpcnc/${C}/${PC}/${NC}`;
     } else if (chartType === 'GaugeOverall') {
