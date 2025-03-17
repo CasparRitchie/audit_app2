@@ -303,40 +303,125 @@ def serve_react_app(path):
     else:
         return send_from_directory(app.static_folder, 'index.html')
 
+
+@app.route('/api/audit_header', methods=['GET'])
+def get_audit_header():
+    summary_only = request.args.get('summary', 'false').lower() == 'true'
+    header_data = load_header_data()
+
+    if summary_only:
+        # Return only 'id' and 'question' columns for summary
+        header_summary = [{"id": item["id"], "question": item["question"]} for item in header_data]
+        return jsonify(header_summary)
+
+    return jsonify(header_data)
+
+
 @app.route('/api/get_audit_headers', methods=['GET'])
 def get_audit_headers():
     try:
-        # Load the audit headers CSV
+        # Load the CSV file
         df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
 
-        # Extract unique audit IDs
-        unique_audit_ids = df['auditId'].unique()
+        # Log the columns to ensure we're working with the correct data
+        logging.info(f"Audit Headers CSV Columns: {df.columns}")
 
-        return jsonify({"auditIds": list(unique_audit_ids)})
+        # Check that at least 'auditId' is present
+        required_columns = {'auditId'}
+        if not required_columns.issubset(df.columns):
+            logging.error("Missing 'auditId' column in the audit header CSV.")
+            return jsonify({"error": "Missing required columns in the audit header data"}), 500
+
+        # Replace NaN values with None for JSON compatibility
+        df = df.where(pd.notnull(df), None)
+
+        # Convert the DataFrame to a dictionary format for JSON response
+        headers_data = df.to_dict(orient='records')
+        logging.info(f"Audit Headers loaded: {headers_data}")
+
+        return jsonify(headers_data)
+
     except Exception as e:
-        logging.error(f"Error fetching audit headers: {e}")
-        return jsonify({"error": "Failed to fetch audit headers"}), 500
+        logging.error(f"Error loading audit headers: {e}")
+        return jsonify({"error": "Failed to load audit headers"}), 500
 
 
-@app.route('/api/get_audit_header/<audit_id>', methods=['GET'])
-def get_audit_header_by_id(audit_id):
+@app.route('/api/get_audit_headers_grouped', methods=['GET'])
+def get_audit_headers_grouped():
     try:
-        # Load the audit headers CSV
+        # Load the CSV file
         df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
 
-        # Filter the rows for the specific audit ID
+        # Replace NaN values with None for JSON compatibility
+        df = df.where(pd.notnull(df), None)
+
+        # Group data by 'auditId'
+        grouped_data = df.groupby('auditId').apply(
+            lambda group: {
+                "auditId": group.name,
+                "questions": group[['question', 'response', 'comment', 'image_path']].to_dict(orient='records')
+            }
+        ).tolist()
+
+        logging.info(f"Grouped Audit Headers: {grouped_data}")
+
+        return jsonify(grouped_data)
+
+    except Exception as e:
+        logging.error(f"Error loading grouped audit headers: {e}")
+        return jsonify({"error": "Failed to load grouped audit headers"}), 500
+
+
+@app.route('/api/get_audit_header_grouped/<audit_id>', methods=['GET'])
+def get_audit_header_grouped(audit_id):
+    try:
+        # Load the CSV file containing audit header responses
+        df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
+
+        # Filter for the specific audit header ID
         filtered_df = df[df['auditId'] == audit_id]
 
-        if filtered_df.empty:
-            return jsonify({"error": "No data found for the given audit ID"}), 404
+        # Group by auditId and organize questions and responses
+        grouped_data = {
+            "auditId": audit_id,
+            "questions": filtered_df[['question', 'response', 'comment', 'image_path']].to_dict(orient='records')
+        }
 
-        # Format the data into a list of dictionaries
-        responses = filtered_df.to_dict(orient='records')
+        return jsonify(grouped_data)
 
-        return jsonify({"auditId": audit_id, "questions": responses})
     except Exception as e:
-        logging.error(f"Error fetching audit header for ID {audit_id}: {e}")
+        logging.error(f"Error fetching grouped audit header for ID {audit_id}: {e}")
         return jsonify({"error": "Failed to fetch audit header"}), 500
+
+
+@app.route('/api/get_audit_header_detail/<auditId>', methods=['GET'])
+def get_audit_header_detail(auditId):
+    try:
+        # Load the CSV file
+        df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
+
+        # Check if required columns are present
+        required_columns = {'auditId', 'question'}
+        if not required_columns.issubset(df.columns):
+            logging.error("Missing columns in the audit header CSV.")
+            return jsonify({"error": "Missing columns in the audit header data"}), 500
+
+        # Filter the DataFrame to find the row(s) with the specified auditId
+        filtered_data = df[df['auditId'] == auditId]
+
+        # If no matching data is found, return an error
+        if filtered_data.empty:
+            return jsonify({"error": "No data found for the specified audit ID"}), 404
+
+        # Convert the filtered DataFrame to a dictionary for JSON response
+        header_data = filtered_data.to_dict(orient='records')
+        logging.info(f"Audit Header details loaded for ID {auditId}: {header_data}")
+
+        return jsonify(header_data)
+
+    except Exception as e:
+        logging.error(f"Error loading audit header for ID {auditId}: {e}")
+        return jsonify({"error": "Failed to load audit header details"}), 500
 
 
 # API route to fetch audit detail data
