@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 import uuid
 import math
-from flask import Flask, send_file
 from plotly import graph_objects as go
 import numpy as np
 from PIL import Image
