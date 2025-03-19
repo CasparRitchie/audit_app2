@@ -115,6 +115,19 @@ def update_env_file(key, value):
     set_key(env_file_path, key, value)
 
 
+def sanitize_data(data):
+    """Cleans the response, handling NaN values and replacing missing images."""
+    if isinstance(data, list):
+        return [sanitize_data(item) for item in data]
+    elif isinstance(data, dict):
+        return {key: sanitize_data(value) for key, value in data.items()}
+    elif isinstance(data, float) and np.isnan(data):  # Replace NaN
+        return ""
+    elif isinstance(data, str) and data.strip() == "[]":  # Replace empty image lists
+        return "No image"
+    return data
+
+
 def load_csv_from_dropbox(file_path, header_row=0, delimiter=','):
     dbx = get_dropbox_client()
     try:
@@ -607,10 +620,19 @@ def get_audits():
 @app.route('/api/get_audit/<audit_id>', methods=['GET'])
 def get_audit(audit_id):
     df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
+
     if not df.empty:
-        audit_data = df[df['auditId'] == audit_id].to_dict(orient='records')
+        audit_data = df[df['auditId'] == audit_id]
+
+        # ✅ Remove duplicates based on 'question'
+        audit_data = audit_data.drop_duplicates(subset=['question'])
+
+        # Convert to dictionary format
+        audit_data = audit_data.to_dict(orient='records')
+
         if audit_data:
-            return jsonify(audit_data)
+            clean_response = sanitize_data(audit_data)  # ✅ Sanitize the data
+            return jsonify(clean_response)
         else:
             return jsonify({"error": "Audit not found"}), 404
     else:
