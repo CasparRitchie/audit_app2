@@ -156,44 +156,40 @@ def save_csv_to_dropbox(df_new, file_path):
     dbx = get_dropbox_client()
 
     try:
-        # Download existing file content
+        # Load existing data
         _, res = dbx.files_download(file_path)
         existing_data = pd.read_csv(io.BytesIO(res.content), sep=',', encoding='utf-8')
 
         # Strip whitespace from column headers to avoid duplication
         existing_data.columns = existing_data.columns.str.strip()
 
-        # Confirm existing data structure with logging
-        logging.info(f"Existing data loaded from Dropbox:\n{existing_data.head()}")
-
-        # Check if existing_data is empty or malformed
-        if existing_data.empty or existing_data.columns[0].startswith("auditId,question"):
-            logging.warning("Existing data appears malformed; reloading with corrected columns.")
-            existing_data = pd.DataFrame(columns=df_new.columns)  # Use new data's columns if malformed
+        logging.info(f"📁 Existing data loaded (Shape: {existing_data.shape})")
 
     except dropbox.exceptions.ApiError:
-        # File doesn't exist, create a new DataFrame with same columns
-        logging.warning("No existing file found or error loading existing file. Using new data only.")
+        logging.warning("No existing file found. Using new data only.")
         existing_data = pd.DataFrame(columns=df_new.columns)
 
-    # Align columns to ensure no missing or extra columns
-    for col in df_new.columns:
-        if col not in existing_data.columns:
-            existing_data[col] = None
+    # Ensure 'auditHeaderID' column exists
+    if 'auditHeaderID' not in existing_data.columns:
+        existing_data['auditHeaderID'] = None
 
-    # Append new data to the existing DataFrame
+    # ✅ **Combine and Remove Duplicates**
     combined_data = pd.concat([existing_data, df_new], ignore_index=True)
 
-    # Remove any duplicated columns, especially 'auditHeaderID'
-    combined_data = combined_data.loc[:, ~combined_data.columns.duplicated()]
+    # Log before deduplication
+    logging.info(f"📊 Combined data (Shape: {combined_data.shape})")
 
-    # Confirm that no duplicates are in the final data
-    logging.info(f"Final data to be saved to Dropbox after removing duplicates:\n{combined_data.head()}")
+    # ✅ **Drop ALL duplicates based on (auditId, question, auditDetailId)**
+    combined_data.drop_duplicates(subset=['auditId', 'question', 'auditDetailId'], keep='last', inplace=True)
+
+    # Log after deduplication
+    logging.info(f"✅ FINAL: Data after removing duplicates (Shape: {combined_data.shape})")
 
     # Convert to CSV and save
     csv_data = combined_data.to_csv(index=False, sep=',')
     dbx.files_upload(csv_data.encode('utf-8'), file_path, mode=dropbox.files.WriteMode('overwrite'))
-    logging.info(f"Saved CSV to {file_path} on Dropbox")
+
+    logging.info(f"✅ Cleaned CSV saved to {file_path}")
 
 
 def load_header_data():
@@ -469,17 +465,10 @@ def submit_audit():
 
     # Process each question response
     for question_id, response_value in responses.items():
-        # Log each question_id and its associated response and comment
-        logging.info(f"Processing Question ID: {question_id}")
-        logging.info(f"Response for Question ID {question_id}: {response_value}")
         comment_value = comments.get(question_id, "")
-        logging.info(f"Comment for Question ID {question_id}: {comment_value}")
 
-        image_paths = []  # To store paths of uploaded images
-
-        # Retrieve images with the format `images[question_id][]`
+        image_paths = []  # Store paths of uploaded images
         images = request.files.getlist(f"images[{question_id}][]")
-        logging.info(f"Number of images received for question {question_id}: {len(images)}")
 
         for image in images:
             if image.filename:
@@ -489,50 +478,84 @@ def submit_audit():
                     dbx = get_dropbox_client()
                     dbx.files_upload(image.read(), dropbox_path, mode=dropbox.files.WriteMode('overwrite'))
                     image_paths.append(dropbox_path)
-                    logging.info(f"Image {filename} uploaded successfully to {dropbox_path}")
                 except Exception as e:
                     logging.error(f"Failed to upload image {filename}: {e}")
 
-        # Append data for this question to save to CSV
+        # Append data for this question
         data_entry = {
             "auditId": audit_header_id,
             "question": question_id,
             "response": response_value,
             "comment": comment_value,
-            "image_path": json.dumps(image_paths),  # Store image paths as JSON string
+            "image_path": json.dumps(image_paths),
             "auditDetailId": audit_detail_id,
-            "auditHeaderID": audit_header_id  # Ensure auditHeaderID is set
+            "auditHeaderID": audit_header_id
         }
         data_to_save.append(data_entry)
-        logging.info(f"Data entry for question {question_id} added to save list: {data_entry}")
-    # Convert new data to DataFrame
-    # Convert new data to DataFrame
-    df_new_data = pd.DataFrame(data_to_save)
-    df_new_data.columns = df_new_data.columns.str.strip()  # Ensure no leading/trailing spaces in headers
 
-    # Log df_new_data to confirm it contains the expected new entries
+    df_new_data = pd.DataFrame(data_to_save)
+    df_new_data.columns = df_new_data.columns.str.strip()  # Ensure clean headers
     logging.info(f"New data to append:\n{df_new_data}")
 
-    # Load existing data to avoid duplication and drop extra columns
+    # Load existing data
     existing_data = load_csv_from_dropbox(RESPONSES_CSV_PATH)
 
-    # Remove duplicate 'auditHeaderID' columns if any exist
-    existing_data = existing_data.loc[:, ~existing_data.columns.duplicated()]
-
-    # Ensure auditHeaderID column exists and is consistently populated
+    # Ensure 'auditHeaderID' column exists
     if 'auditHeaderID' not in existing_data.columns:
         existing_data['auditHeaderID'] = audit_header_id
 
-    # Concatenate the existing and new data without using drop_duplicates
+    # Combine new and existing data
     combined_data = pd.concat([existing_data, df_new_data], ignore_index=True)
 
-    # Log combined_data to confirm both existing and new rows are included
-    logging.info(f"Final data to be saved to Dropbox after appending new entries:\n{combined_data.head(10)}")
+    # Log before deduplication
+    logging.info(f"📊 Combined data (Shape: {combined_data.shape})")
 
-    # Save combined data back to Dropbox
+    # ✅ **Remove ALL duplicates based on (auditId, question, auditDetailId)**
+    combined_data.drop_duplicates(subset=['auditId', 'question', 'auditDetailId'], keep='last', inplace=True)
+
+    # Log after deduplication
+    logging.info(f"✅ FINAL: Data after removing duplicates (Shape: {combined_data.shape})")
+
+    # Save back to Dropbox
     save_csv_to_dropbox(combined_data, RESPONSES_CSV_PATH)
-    logging.info("Audit details with images and comments saved successfully to CSV.")
+    logging.info("✅ Audit details submitted and saved successfully.")
     return jsonify({"message": "Audit details submitted successfully"}), 200
+
+
+### ✅ **Function to Remove ALL Duplicates Based on ('auditId', 'question', 'auditDetailId')**
+def remove_all_duplicates(df):
+    """
+    Removes duplicates from responses.csv based on ('auditId', 'question', 'auditDetailId').
+    Ensures the latest response is kept and data formatting is consistent.
+    """
+    logging.info("🚀 Starting duplicate removal process for responses.csv...")
+
+    if df.empty:
+        logging.warning("⚠️ responses.csv is empty, skipping duplicate removal.")
+        return df
+
+    # ✅ Ensure correct column order & remove unexpected columns
+    expected_columns = ['auditId', 'question', 'response', 'comment', 'image_path', 'auditDetailId', 'auditHeaderID']
+    df = df[[col for col in expected_columns if col in df.columns]]
+
+    # ✅ Strip whitespace from columns
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+    # ✅ Convert columns to string to ensure consistent comparison
+    df['auditId'] = df['auditId'].astype(str)
+    df['question'] = df['question'].astype(str)
+    df['auditDetailId'] = df['auditDetailId'].astype(str)
+
+    # ✅ Sort by 'auditDetailId' to keep only the latest version of each entry
+    df.sort_values(by=['auditId', 'question', 'auditDetailId'], ascending=True, inplace=True)
+
+    # ✅ Drop exact duplicates based on 'auditId', 'question', and 'auditDetailId', keeping the last one
+    df_cleaned = df.drop_duplicates(subset=['auditId', 'question', 'auditDetailId'], keep='last')
+
+    logging.info(f"✅ Duplicate removal complete. {len(df) - len(df_cleaned)} duplicates removed.")
+    return df_cleaned
+
+
 
 
 @app.route('/api/submit', methods=['POST'])
@@ -1017,6 +1040,64 @@ def generate_cpcnc_gauge(c_count, pc_count, nc_count):
     img.seek(0)
 
     return send_file(img, mimetype="image/png")
+
+
+@app.route('/api/debug_csv/responses', methods=['GET'])
+def debug_csv_responses():
+    df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
+
+    # Identify duplicates based on 'auditId' and 'question'
+    duplicate_rows = df[df.duplicated(subset=['auditId', 'question'], keep=False)]
+
+    logging.info(f"Duplicate rows found:\n{duplicate_rows}")
+
+    return jsonify(duplicate_rows.to_dict(orient='records'))
+
+
+# @app.route('/api/fix_duplicates/responses', methods=['GET','POST'])
+# def fix_csv_duplicates():
+#     df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
+
+#     if df.empty:
+#         return jsonify({"error": "CSV is empty or missing"}), 500
+
+#     # ✅ Drop duplicates, keeping only the last recorded entry for each auditId + question
+#     df_cleaned = df.drop_duplicates(subset=['auditId', 'question'], keep='last')
+
+#     logging.info(f"Cleaned data after removing duplicates:\n{df_cleaned}")
+
+#     # ✅ Save back to Dropbox
+#     save_csv_to_dropbox(df_cleaned, RESPONSES_CSV_PATH)
+
+#     return jsonify({"message": "Duplicates removed successfully"}), 200
+
+
+@app.route('/api/fix_all_duplicates/responses', methods=['POST', 'GET'])
+def fix_all_duplicates_responses():
+    logging.info("🧹 Running full duplicate cleanup on responses.csv...")
+
+    # Load CSV
+    df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
+
+    if df.empty:
+        logging.warning("⚠ No data found in responses.csv.")
+        return jsonify({"error": "No data found"}), 400
+
+    # ✅ Remove any whitespace in column names
+    df.columns = df.columns.str.strip()
+
+    # ✅ Drop **all** duplicated rows
+    df = df.drop_duplicates(keep="first")
+
+    # ✅ Ensure no duplicate auditId/question pairs (we keep the last valid entry)
+    df = df.drop_duplicates(subset=['auditId', 'question'], keep='last')
+
+    # ✅ Save cleaned file back
+    save_csv_to_dropbox(df, RESPONSES_CSV_PATH)
+    logging.info("✅ All duplicates removed successfully!")
+
+    return jsonify({"message": "All duplicates removed from responses.csv"}), 200
+
 
 
 if __name__ == '__main__':
