@@ -329,7 +329,7 @@ def get_audit_header():
 def get_audit_headers():
     try:
         # Load the CSV file
-        df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
+        df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH, header_row=0)
 
         # Log the columns to ensure we're working with the correct data
         logging.info(f"Audit Headers CSV Columns: {df.columns}")
@@ -338,7 +338,7 @@ def get_audit_headers():
         required_columns = {'auditId'}
         if not required_columns.issubset(df.columns):
             logging.error("Missing 'auditId' column in the audit header CSV.")
-            return jsonify({"error": "Missing required columns in the audit header data"}), 500
+            return jsonify({"error": "Missing required columns in the audit headerZ data"}), 500
 
         # Replace NaN values with None for JSON compatibility
         df = df.where(pd.notnull(df), None)
@@ -409,7 +409,7 @@ def get_audit_header_detail(auditId):
         df = load_csv_from_dropbox(RESPONSES_AUDIT_HEADER_CSV_PATH)
 
         # Check if required columns are present
-        required_columns = {'auditId', 'question'}
+        required_columns = {'auditId', 'questionId'}
         if not required_columns.issubset(df.columns):
             logging.error("Missing columns in the audit header CSV.")
             return jsonify({"error": "Missing columns in the audit header data"}), 500
@@ -992,8 +992,6 @@ def generate_overall_gauge(green_count, amber_count, red_count):
     return send_file(cropped_img_io, mimetype="image/png")
 
 
-
-
 @app.route('/api/chart/gauge/cpcnc/<int:c_count>/<int:pc_count>/<int:nc_count>', methods=['GET'])
 def generate_cpcnc_gauge(c_count, pc_count, nc_count):
     total = c_count + pc_count + nc_count
@@ -1054,24 +1052,6 @@ def debug_csv_responses():
     return jsonify(duplicate_rows.to_dict(orient='records'))
 
 
-# @app.route('/api/fix_duplicates/responses', methods=['GET','POST'])
-# def fix_csv_duplicates():
-#     df = load_csv_from_dropbox(RESPONSES_CSV_PATH)
-
-#     if df.empty:
-#         return jsonify({"error": "CSV is empty or missing"}), 500
-
-#     # ✅ Drop duplicates, keeping only the last recorded entry for each auditId + question
-#     df_cleaned = df.drop_duplicates(subset=['auditId', 'question'], keep='last')
-
-#     logging.info(f"Cleaned data after removing duplicates:\n{df_cleaned}")
-
-#     # ✅ Save back to Dropbox
-#     save_csv_to_dropbox(df_cleaned, RESPONSES_CSV_PATH)
-
-#     return jsonify({"message": "Duplicates removed successfully"}), 200
-
-
 @app.route('/api/fix_all_duplicates/responses', methods=['POST', 'GET'])
 def fix_all_duplicates_responses():
     logging.info("🧹 Running full duplicate cleanup on responses.csv...")
@@ -1097,7 +1077,6 @@ def fix_all_duplicates_responses():
     logging.info("✅ All duplicates removed successfully!")
 
     return jsonify({"message": "All duplicates removed from responses.csv"}), 200
-
 
 
 if __name__ == '__main__':
