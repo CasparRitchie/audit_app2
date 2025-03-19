@@ -192,6 +192,46 @@ def save_csv_to_dropbox(df_new, file_path):
     logging.info(f"✅ Cleaned CSV saved to {file_path}")
 
 
+def save_header_csv_to_dropbox(df_new, file_path):
+    dbx = get_dropbox_client()
+
+    try:
+        # Load existing data from Dropbox
+        _, res = dbx.files_download(file_path)
+        existing_data = pd.read_csv(io.BytesIO(res.content), sep=',', encoding='utf-8')
+
+        # Strip whitespace from column headers
+        existing_data.columns = existing_data.columns.str.strip()
+
+        logging.info(f"📁 Existing header data loaded (Shape: {existing_data.shape})")
+
+    except dropbox.exceptions.ApiError:
+        logging.warning("No existing header file found. Using new data only.")
+        existing_data = pd.DataFrame(columns=df_new.columns)
+
+    # ✅ Ensure only correct columns are present
+    expected_columns = ['auditId', 'questionId', 'response']
+    df_new = df_new[expected_columns]  # Select only necessary columns
+
+    # ✅ **Combine and Remove Duplicates**
+    combined_data = pd.concat([existing_data, df_new], ignore_index=True)
+
+    # Log before deduplication
+    logging.info(f"📊 Combined header data (Shape: {combined_data.shape})")
+
+    # ✅ **Drop ALL duplicates based on (auditId, questionId)**
+    combined_data.drop_duplicates(subset=['auditId', 'questionId'], keep='last', inplace=True)
+
+    # Log after deduplication
+    logging.info(f"✅ FINAL: Header data after removing duplicates (Shape: {combined_data.shape})")
+
+    # Convert to CSV and save
+    csv_data = combined_data.to_csv(index=False, sep=',')
+    dbx.files_upload(csv_data.encode('utf-8'), file_path, mode=dropbox.files.WriteMode('overwrite'))
+
+    logging.info(f"✅ Cleaned Audit Header CSV saved to {file_path}")
+
+
 def load_header_data():
     # Download the CSV with the second row as headers for Audit Header
     df = load_csv_from_dropbox(HEADER_CSV_PATH, header_row=0)
@@ -556,8 +596,6 @@ def remove_all_duplicates(df):
     return df_cleaned
 
 
-
-
 @app.route('/api/submit', methods=['POST'])
 def submit_audit_responses():
     try:
@@ -592,12 +630,12 @@ def submit_audit_responses():
 
         # Convert new_data to DataFrame and define consistent columns
         df_new = pd.DataFrame(new_data)
-        expected_columns = ["auditId", "questionId", "response"]
-        df_new = df_new.reindex(columns=expected_columns)
+        # expected_columns = ["auditId", "questionId", "response"]
+        df_new = df_new[["auditId", "questionId", "response"]]
         logging.info(f"New data to be saved:\n{df_new}")
 
         # Save the new data to Dropbox, appending to existing data if present
-        save_csv_to_dropbox(df_new, RESPONSES_AUDIT_HEADER_CSV_PATH)
+        save_header_csv_to_dropbox(df_new, RESPONSES_AUDIT_HEADER_CSV_PATH)
 
         return jsonify({"status": "success", "message": "Audit header saved successfully"})
 
@@ -859,7 +897,6 @@ def generate_pie_chart(sizes, labels=None, colors=None, explode=None, startangle
     plt.close()
 
     return img
-
 
 
 @app.route('/api/chart/okko/<int:ok_count>/<int:ko_count>', methods=['GET'])

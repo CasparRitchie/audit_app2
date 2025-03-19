@@ -74,7 +74,7 @@ function AuditHeader() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       .then(() => {
-        alert(`Audit header submitted successfully! New ID: ${auditId}`);
+        alert('Audit header submitted successfully! New ID: ${auditId}');
       })
       .catch((error) => console.error('Error submitting audit header:', error));
   };
