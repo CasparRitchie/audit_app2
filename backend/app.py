@@ -686,7 +686,7 @@ def get_audit(audit_id):
         audit_data = df[df['auditId'] == audit_id]
 
         # ✅ Remove duplicates based on 'question'
-        audit_data = audit_data.drop_duplicates(subset=['question'])
+        audit_data = audit_data.drop_duplicates(subset=['auditDetailId', 'question'])
 
         # Convert to dictionary format
         audit_data = audit_data.to_dict(orient='records')

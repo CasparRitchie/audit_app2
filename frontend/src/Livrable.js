@@ -5,16 +5,18 @@ function Livrable() {
   const [auditHeaderIds, setAuditHeaderIds] = useState([]);
   const [selectedHeaderId, setSelectedHeaderId] = useState('');
   const [headerDetails, setHeaderDetails] = useState([]);
-  const [questionsMap, setQuestionsMap] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [headerQuestionsMap, setHeaderQuestionsMap] = useState({});
+  const [detailQuestionsMap, setDetailQuestionsMap] = useState({});
+  const [auditDetailIds, setAuditDetailIds] = useState([]);
+  const [selectedDetailIds, setSelectedDetailIds] = useState([]);
+  const [auditResponses, setAuditResponses] = useState([]);
   const [error, setError] = useState(null);
 
+  // ✅ Fetch available audit headers
   useEffect(() => {
     async function fetchAuditHeaders() {
       try {
-        console.log("Fetching audit headers...");
         const res = await axios.get('/api/get_audit_headers');
-        console.log("Audit Headers Response:", res.data);
         const uniqueIds = [...new Set(res.data.map(audit => audit.auditId))];
         setAuditHeaderIds(uniqueIds);
       } catch (err) {
@@ -25,44 +27,91 @@ function Livrable() {
     fetchAuditHeaders();
   }, []);
 
+  // ✅ Fetch audit HEADER questions
   useEffect(() => {
-    async function fetchQuestions() {
+    async function fetchHeaderQuestions() {
       try {
-        console.log("Fetching questions...");
         const res = await axios.get('/api/audit_header');
-        console.log("Questions Response:", res.data);
         const questionsMap = res.data.reduce((acc, question) => {
           acc[question.id] = question.question;
           return acc;
         }, {});
-        setQuestionsMap(questionsMap);
+        setHeaderQuestionsMap(questionsMap);
       } catch (err) {
-        console.error("Error fetching questions:", err);
-        setError("Failed to load questions.");
+        console.error("Error fetching audit header questions:", err);
+        setError("Failed to load audit header questions.");
       }
     }
-    fetchQuestions();
+    fetchHeaderQuestions();
   }, []);
 
+  // ✅ Fetch audit DETAIL questions (from `questions.csv`)
+  useEffect(() => {
+    async function fetchDetailQuestions() {
+      try {
+        const res = await axios.get('/api/audit_detail');
+
+        // Flatten hierarchical structure & map questions by ID
+        const questionsMap = {};
+        Object.values(res.data).forEach(chapitre => {
+          Object.values(chapitre).forEach(sousChapitre => {
+            Object.values(sousChapitre).forEach(paragraphe => {
+              Object.values(paragraphe).forEach(sousParagraphe => {
+                sousParagraphe.forEach(question => {
+                  questionsMap[question.id] = question.question;
+                });
+              });
+            });
+          });
+        });
+
+        setDetailQuestionsMap(questionsMap);
+      } catch (err) {
+        console.error("Error fetching audit detail questions:", err);
+        setError("Failed to load audit detail questions.");
+      }
+    }
+    fetchDetailQuestions();
+  }, []);
+
+  // ✅ Fetch Audit Header & Responses
   const fetchHeaderDetails = async (auditId) => {
     setSelectedHeaderId(auditId);
     setHeaderDetails([]);
+    setAuditDetailIds([]);
+    setSelectedDetailIds([]);
+    setAuditResponses([]);
 
     try {
-      console.log(`Fetching audit header details for ID: ${auditId}`);
-      const res = await axios.get(`/api/get_audit_header_detail/${auditId}`);
-      console.log("Audit Header Details Response:", res.data);
-      setHeaderDetails(res.data);
+      const resHeader = await axios.get(`/api/get_audit_header_detail/${auditId}`);
+      setHeaderDetails(resHeader.data);
+
+      const resDetail = await axios.get(`/api/get_audit/${auditId}`);
+      setAuditResponses(resDetail.data);
+
+      // ✅ Collect Unique Audit Detail IDs
+      const uniqueDetailIds = [...new Set(resDetail.data.map(detail => detail.auditDetailId))];
+      setAuditDetailIds(uniqueDetailIds);
     } catch (err) {
-      console.error("Error fetching audit header details:", err);
-      setHeaderDetails([]);
+      console.error("Error fetching audit details:", err);
+      setAuditResponses([]);
     }
+  };
+
+  // ✅ Handle checkbox selection of audit detail IDs
+  const handleDetailSelection = (auditDetailId) => {
+    setSelectedDetailIds((prevSelected) =>
+      prevSelected.includes(auditDetailId)
+        ? prevSelected.filter(id => id !== auditDetailId)
+        : [...prevSelected, auditDetailId]
+    );
   };
 
   return (
     <div className="container">
       <h1>Livrable - Debug Mode</h1>
 
+      {/* Select Audit Header */}
       <div className="form-group">
         <label>Select Audit Header ID:</label>
         <select
@@ -77,9 +126,10 @@ function Livrable() {
         </select>
       </div>
 
+      {/* Display Audit Header Responses */}
       {headerDetails.length > 0 && (
         <div>
-          <h3>Audit Header Details for {selectedHeaderId}</h3>
+          <h3>Audit Header Responses for {selectedHeaderId}</h3>
           <table className="table table-bordered">
             <thead>
               <tr>
@@ -90,12 +140,66 @@ function Livrable() {
             <tbody>
               {headerDetails.map((detail, index) => (
                 <tr key={index}>
-                  <td>{questionsMap[detail.questionId] || detail.questionId}</td>
+                  <td>{headerQuestionsMap[detail.questionId] || `Unknown (${detail.questionId})`}</td>
                   <td>{detail.response || 'No response'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {auditResponses.length > 0 && (
+        <div>
+          <h3>Select Audit Details to View</h3>
+          <div className="form-group">
+            {auditDetailIds.map((auditDetailId) => (
+              <div key={auditDetailId} className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id={auditDetailId}
+                  checked={selectedDetailIds.includes(auditDetailId)}
+                  onChange={() => handleDetailSelection(auditDetailId)}
+                />
+                <label className="form-check-label" htmlFor={auditDetailId}>{auditDetailId}</label>
+              </div>
+            ))}
+          </div>
+
+          {selectedDetailIds.length > 0 && (
+            <div>
+              <h3>Audit Responses</h3>
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Question</th>
+                    <th>Response</th>
+                    <th>Comment</th>
+                    <th>Image</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditResponses
+                    .filter(detail => selectedDetailIds.includes(detail.auditDetailId) && detail.response) // ✅ Only show questions with responses
+                    .map((detail, index) => (
+                      <tr key={index}>
+                        <td>{detailQuestionsMap[detail.question] || `Unknown (${detail.question})`}</td>
+                        <td>{detail.response || 'No response'}</td>
+                        <td>{detail.comment || 'No comment'}</td>
+                        <td>
+                          {detail.image_path && detail.image_path.length > 0 ? (
+                            <img src={detail.image_path} alt="Response Image" style={{ width: '50px', height: '50px' }} />
+                          ) : (
+                            'No Image'
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>
