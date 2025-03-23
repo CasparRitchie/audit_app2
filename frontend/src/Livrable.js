@@ -188,10 +188,10 @@ function Livrable() {
                         <td>{detail.response || 'No response'}</td>
                         <td>{detail.comment || 'No comment'}</td>
                         <td>
-                          {detail.image_path && detail.image_path.length > 0 ? (
+                          {detail.image_path && detail.image_path.length > 0 && detail.image_path !== "No image" ? (
                             <img src={detail.image_path} alt="Response Image" style={{ width: '50px', height: '50px' }} />
                           ) : (
-                            'No Image'
+                            <span>No image</span>
                           )}
                         </td>
                       </tr>
